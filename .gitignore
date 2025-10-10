@@ -1,0 +1,37 @@
+# Personal learning files
+*-learning.md
+my-english-learning.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+env/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+temp/
+
+# Backups
+*.bak
+backup/
+
+# Personal notes
+notes.md
+TODO.md
+.claude
