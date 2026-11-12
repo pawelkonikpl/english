@@ -72,6 +72,21 @@ raportują też F1 0.980 na ręcznie oznaczonym, realnym tekście (strony WWW, P
 7. Zależności ML (`torch`, `transformers`) jako opcjonalny extra `[ml]` — backend `regex`
    i API działają bez nich.
 
+## Decyzje po review
+
+1. **Dostęp:** serwis jest wewnętrzny — bez uwierzytelniania. Nie wystawiamy portu
+   poza sieć wewnętrzną (odpowiedź zawiera znalezione dane osobowe).
+2. **Niezależność:** serwis działa samodzielnie i nie jest dopasowany do plików nauki.
+   Bez `categories` w żądaniu maskuje wszystkie kategorie, łącznie z `DATE` i `OTHER`;
+   klient, który chce zachować daty, podaje `categories`.
+3. **Próg pewności:** tylko globalny `PII_MIN_SCORE` (domyślnie 0.5) w konfiguracji,
+   nadpisywalny per żądanie polem `min_score`. Bez progów per kategoria i bez
+   konfigurowalnej listy domyślnych kategorii.
+4. **Docelowe miejsce:** serwis ma żyć w `pawelkonikpl/agent-factory`, gdzie istnieje już
+   pozycja backlogu (Faza 22, „Anonymise personal data before a cloud AI provider gets it”).
+   Pozycja została dostosowana do tego researchu i decyzji; ten katalog zostaje jako
+   implementacja referencyjna do przeniesienia, bez merge'a do `english`.
+
 ## Poza zakresem
 
 - Testy automatyczne (krok 4 dev-flow, osobna sesja).
