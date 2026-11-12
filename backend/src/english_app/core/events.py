@@ -6,11 +6,33 @@ together with the change that caused the event.
 
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any, TypeVar
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 EventT = TypeVar("EventT")
+
+
+class ActivityKind(StrEnum):
+    PHRASE_ENROLLED = "phrase_enrolled"
+    REVIEW_GRADED = "review_graded"
+    LESSON_ANSWERED = "lesson_answered"
+    LESSON_COMPLETED = "lesson_completed"
+    CONVERSATION_FINISHED = "conversation_finished"
+
+
+@dataclass(frozen=True)
+class LearningActivity:
+    """Something the learner did. Published by feature modules, consumed by `progress`."""
+
+    kind: ActivityKind
+    ref_type: str
+    ref_id: int
+    details: dict[str, Any] = field(default_factory=dict)
+
+
 Handler = Callable[[Any, AsyncSession], Awaitable[None]]
 
 

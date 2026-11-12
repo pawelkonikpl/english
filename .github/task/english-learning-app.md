@@ -266,7 +266,7 @@ PORT=8000
 |---|---|---|
 | `learner_profile` | id (=1), display_name, level (A1–C2), target_level, native_language, goals (JSON), daily_goal_xp, onboarding_done, created_at | jeden wiersz |
 | `phrase` | id, tier (1–4 lub `pitfalls`), section_code (np. `1.1`), section_title, english, polish, example, note, kind (`phrase`, `phrasal_verb`, `word`, `false_friend`, `common_error`), source (`seed`, `ai`, `user`), ai_explanation (JSON, cache) | unikalność (section_code, english) |
-| `review_item` | id, item_type (`phrase`, `lesson_word`), item_id, step, ease, interval_days, due_on (date), mastery (0–3), lapses, last_reviewed_at, created_at | stan SRS oddzielony od treści |
+| `review_item` | id, item_type (`phrase`, `lesson_word`), item_id, step, interval_days, due_on (date), mastery (0–3), lapses, reviews_count, last_reviewed_at, created_at | stan SRS oddzielony od treści; treść kart dostarczają moduły-właściciele przez rejestr `register_card_loader` |
 | `review_log` | id, review_item_id, grade (`again`, `hard`, `good`, `easy`), mode, reviewed_at | historia do statystyk |
 | `lesson` | id, type (`vocabulary`, `grammar`, `writing`, `placement`), topic, level, content (JSON z LLM), status, score, max_score, created_at, completed_at | |
 | `lesson_answer` | id, lesson_id, exercise_index, answer, is_correct, feedback (JSON) | |
@@ -284,9 +284,10 @@ Migracje Alembic od pierwszej wersji. Plik bazy tworzy się automatycznie przy p
 ### 5.6 Algorytm powtórek (moduł `review`)
 
 Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
-- drabina interwałów: `[1, 3, 7, 14, 30, 60, 120]` dni,
-- `good`: o jeden stopień w górę; `easy`: o dwa stopnie; `hard`: ten sam interwał (minimum 1 dzień); `again`: powrót na stopień 0, `lapses += 1` i pozycja wraca jeszcze w tej samej sesji,
-- `mastery`: 0 = nowe, 1 = stopnie 0–1, 2 = stopnie 2–3, 3 = stopień ≥ 4 (interwał ≥ 30 dni, czyli „opanowane ⭐⭐⭐”),
+- drabina interwałów: `[1, 3, 7, 14, 30, 60, 120]` dni; `step` = liczba zdobytych stopni, a stopień n ≥ 1 oznacza interwał `drabina[n-1]` (nowa pozycja ma `step = 0` i jest do powtórki od razu),
+- `good`: o jeden stopień w górę; `easy`: o dwa stopnie; `hard`: ten sam stopień (minimum 1, czyli co najmniej 1 dzień); `again`: powrót na stopień 0, `lapses += 1` i pozycja wraca jeszcze w tej samej sesji,
+- „Znam to” przy wpisie zaczyna od stopnia 2 (następna powtórka za 3 dni),
+- `mastery` liczone z interwału: 0 = nowe (stopień 0), 1 = interwał < 7 dni, 2 = 7–29 dni, 3 = ≥ 30 dni (czyli „opanowane ⭐⭐⭐”),
 - „dzisiaj” liczone w strefie `APP_TIMEZONE`; zegar wstrzykiwany (`core/clock.py`).
 
 ### 5.7 Moduły: zachowanie
@@ -310,7 +311,7 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 
 **review (Powtórki):**
 - wspólna kolejka zaległych pozycji (frazy i słówka z lekcji), sortowana po `due_on`,
-- tryby kart: **rozpoznawanie** (EN → odwróć → PL), **przypominanie** (PL → wpisz EN; dopasowanie tolerancyjne: wielkość liter, interpunkcja, drobne literówki według odległości Levenshteina ≤ 1 dla słów > 4 znaków), **użyj w zdaniu** (ocena LLM: `{correct, corrected_sentence, explanation_pl}`),
+- tryby kart: **rozpoznawanie** (EN → odwróć → PL), **przypominanie** (PL → wpisz EN; dopasowanie tolerancyjne: wielkość liter, interpunkcja, apostrofy, jedna literówka (odległość OSA ≤ 1, przestawienie liter liczy się jako jedna) dla odpowiedzi ≥ 5 znaków, alternatywy rozdzielone „ / ”), **użyj w zdaniu** (ocena LLM: `{correct, corrected_sentence, explanation_pl}`),
 - ocena czterema przyciskami (`Again`, `Hard`, `Good`, `Easy`), skróty klawiszowe (spacja: odwróć; 1–4: ocena),
 - podsumowanie sesji: ile pozycji, ile poprawnych, zdobyte XP.
 
@@ -355,6 +356,8 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 | `POST /phrases/{id}/explain` | wyjaśnienie AI (cache w bazie) |
 | `GET /review/due?limit=` | zaległe pozycje z treścią do kart |
 | `POST /review/items/{id}/grade` | `{grade, mode}` → nowy stan SRS i zdobyte XP |
+| `GET /review/summary` | liczba zaległych dziś i wszystkich powtórek (np. do plakietki w menu) |
+| `POST /review/items/{id}/check-recall` | `{answer}` → `{correct, expected}` (tolerancja literówek, alternatywy po „ / ”) |
 | `POST /review/items/{id}/check-sentence` | `{sentence}` → ocena LLM |
 | `GET /conversation/scenarios` | katalog scenek |
 | `POST /conversation` | `{scenario_key, target_phrase_ids?}` → rozmowa z pierwszą kwestią AI |

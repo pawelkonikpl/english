@@ -4,5 +4,8 @@ Each module lives in its own package and exposes an `AppModule` instance as `mod
 """
 
 from english_app.core.modules import AppModule
+from english_app.modules.phrases.module import module as phrases
+from english_app.modules.profile.module import module as profile
+from english_app.modules.review.module import module as review
 
-AVAILABLE_MODULES: list[AppModule] = []
+AVAILABLE_MODULES: list[AppModule] = [profile, review, phrases]
