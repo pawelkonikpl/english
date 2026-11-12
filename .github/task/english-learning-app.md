@@ -24,6 +24,7 @@ Lista fraz z `resources/communication-phrases-pl.md` staje się **jednym z modu�
 | Frontend | **React + Vite + TypeScript + Tailwind** (osobny SPA, REST do FastAPI) |
 | Użytkownicy | **Jeden użytkownik, lokalnie**, bez logowania |
 | Moduły w MVP | **wszystkie cztery**: Frazy + powtórki, Rozmowa z AI, Lekcje AI, Dashboard i motywacja |
+| Wybór modelu | Model **określany osobno dla każdego providera** w `.env`, w dwóch klasach: `main` (rozmowa, generowanie lekcji) i `fast` (szybkie oceny, podpowiedzi, wyjaśnienia). Można go **zmienić w ustawieniach aplikacji** (nadpisanie zapisane w bazie) z listy dostępnych modeli. Każda odpowiedź AI zapisuje, jaki model ją wygenerował. |
 
 ## 3. Kontekst w repozytorium (stan obecny)
 
@@ -74,6 +75,9 @@ backend/
     llm/
       base.py                # LLMProvider (ABC), ChatMessage, ProviderStatus, wyjątki
       factory.py             # rejestr providerów + get_llm_provider() na podstawie LLM_PROVIDER
+      models.py              # ModelTier, ModelResolver (kolejność: ustawienia UI → .env → domyślny)
+      service.py             # LLMService: jedyny punkt wejścia dla modułów (tier zamiast nazwy modelu)
+      router.py              # /api/llm/status, /models, /settings, /test
       json_utils.py          # walidacja i naprawa JSON względem modelu Pydantic (fallback)
       providers/
         claude_code.py       # claude-agent-sdk
@@ -125,15 +129,30 @@ class AppModule(Protocol):
 To jest centralny element prośby użytkownika. Interfejs w `llm/base.py`:
 
 ```python
+class ModelTier(StrEnum):
+    MAIN = "main"   # rozmowa, generowanie lekcji, podsumowania
+    FAST = "fast"   # ocena zdania, podpowiedzi, wyjaśnienie frazy
+
 @dataclass(frozen=True)
 class ChatMessage:
     role: Literal["user", "assistant"]
     content: str
 
 @dataclass(frozen=True)
+class ModelInfo:
+    id: str                  # identyfikator przekazywany do SDK, np. "claude-opus-5-5"
+    name: str                # nazwa wyświetlana w UI
+    source: Literal["provider", "config"]   # z API providera czy ze statycznej listy w konfiguracji
+
+@dataclass(frozen=True)
+class LLMResult(Generic[T]):
+    value: T                 # str albo obiekt Pydantic
+    model: str | None        # model, który faktycznie odpowiedział (jeśli SDK go zwraca), inaczej żądany
+
+@dataclass(frozen=True)
 class ProviderStatus:
     provider: str            # "claude_code" | "copilot" | "fake"
-    model: str | None
+    models: dict[ModelTier, str | None]   # aktywny model dla każdej klasy (None = domyślny providera)
     available: bool          # CLI/runtime dostępne i zalogowane
     detail: str | None       # komunikat dla użytkownika, gdy niedostępne
 
@@ -141,17 +160,25 @@ class LLMProvider(ABC):
     name: ClassVar[str]
 
     @abstractmethod
-    async def complete(self, *, system: str, messages: Sequence[ChatMessage]) -> str:
+    async def complete(
+        self, *, system: str, messages: Sequence[ChatMessage], model: str | None
+    ) -> LLMResult[str]:
         """Zwykła odpowiedź tekstowa (rozmowa, wyjaśnienia)."""
 
     @abstractmethod
     async def complete_structured(
-        self, *, system: str, messages: Sequence[ChatMessage], schema: type[T]
-    ) -> T:
+        self, *, system: str, messages: Sequence[ChatMessage], schema: type[T], model: str | None
+    ) -> LLMResult[T]:
         """Odpowiedź zgodna ze schematem Pydantic (lekcje, poprawki, oceny)."""
 
-    async def stream(self, *, system: str, messages: Sequence[ChatMessage]) -> AsyncIterator[str]:
+    async def stream(
+        self, *, system: str, messages: Sequence[ChatMessage], model: str | None
+    ) -> AsyncIterator[str]:
         """Domyślnie: jeden fragment z complete(). Provider może nadpisać prawdziwym streamingiem."""
+
+    @abstractmethod
+    async def list_models(self) -> list[ModelInfo]:
+        """Modele dostępne u providera (do listy wyboru w ustawieniach)."""
 
     @abstractmethod
     async def status(self) -> ProviderStatus:
@@ -160,6 +187,20 @@ class LLMProvider(ABC):
     async def aclose(self) -> None:
         """Zwolnienie zasobów (np. zamknięcie klienta Copilot) przy wyłączaniu aplikacji."""
 ```
+
+**Określanie modelu (`llm/models.py`, `LLMService`):**
+- Moduły **nie wołają providera bezpośrednio**. Korzystają z `LLMService` (wstrzykiwanego przez FastAPI), który ma te same metody, ale zamiast `model` przyjmuje `tier: ModelTier`:
+  ```python
+  await llm.complete_structured(system=..., messages=..., schema=TurnFeedback, tier=ModelTier.MAIN)
+  ```
+- `ModelResolver` wybiera model dla klasy w tej kolejności (pierwszy niepusty wygrywa):
+  1. nadpisanie z ustawień aplikacji (tabela `app_setting`, klucz `llm.<provider>.<tier>`), ustawiane w UI,
+  2. zmienna z `.env` dla aktywnego providera (`CLAUDE_CODE_MODEL`, `CLAUDE_CODE_MODEL_FAST`, `COPILOT_MODEL`, `COPILOT_MODEL_FAST`),
+  3. dla `fast`: model z `main` (gdy nie ustawiono szybkiego, wszystko idzie przez główny),
+  4. `None`, czyli domyślny model providera (SDK sam wybiera).
+- Nadpisania są zapisywane **osobno dla każdego providera**, więc przełączenie `LLM_PROVIDER` nie przenosi nazwy modelu Claude do Copilot.
+- Ustawienie modelu w UI jest walidowane: identyfikator musi być na liście z `list_models()` albo użytkownik zaznacza „własny identyfikator” (na wypadek nowych modeli, których lista jeszcze nie zna). Przycisk „Testuj” wysyła krótkie zapytanie do wybranego modelu i pokazuje, czy działa.
+- `LLMService` zapisuje w wyniku nazwę modelu, a moduły przechowują ją przy odpowiedziach AI (kolumna `model`).
 
 Wyjątki: `LLMError` jako baza, a pod nią `LLMUnavailableError` (brak CLI lub logowania → HTTP 503), `LLMTimeoutError` (→ 504) i `LLMOutputError` (niepoprawny JSON po ponowieniu → 502). Każdy z tych błędów UI pokazuje jako przyjazny komunikat z instrukcją.
 
@@ -173,30 +214,40 @@ Wyjątki: `LLMError` jako baza, a pod nią `LLMUnavailableError` (brak CLI lub l
 - Logowanie: czas wywołania, provider, model, sukces lub błąd. **Bez treści wiadomości** w logach.
 
 **Provider `claude_code`** (`claude-agent-sdk`, zweryfikowana wersja 0.2.180, CLI dołączone do paczki):
-- wywołanie: `query(prompt=..., options=ClaudeAgentOptions(system_prompt=system, model=LLM_MODEL or None, tools=[], max_turns=1, setting_sources=[], cwd=...))`; wynik z `ResultMessage.result`,
+- wywołanie: `query(prompt=..., options=ClaudeAgentOptions(system_prompt=system, model=model, tools=[], max_turns=1, setting_sources=[], cwd=...))`; wynik z `ResultMessage.result`; model, który odpowiedział, z `ResultMessage.model_usage` (klucze słownika),
+- `list_models()`: SDK nie udostępnia listy modeli, więc provider zwraca **statyczną listę z konfiguracji** `CLAUDE_CODE_MODELS` (domyślnie `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`) z `source="config"`; aliasy CLI (`opus`, `sonnet`, `haiku`) można wpisać jako własny identyfikator,
 - tryb strukturalny: `output_format={"type": "json_schema", "schema": schema.model_json_schema()}`, wynik w `ResultMessage.structured_output`,
 - `ResultMessage.is_error` lub brak wyniku → `LLMError`; błąd uruchomienia CLI lub brak logowania → `LLMUnavailableError`,
 - uwierzytelnienie: zalogowany Claude Code na maszynie (subskrypcja). Jeśli ustawiono `ANTHROPIC_API_KEY`, SDK użyje klucza; aplikacja tego nie wymaga.
 
 **Provider `copilot`** (`github-copilot-sdk`, zweryfikowana wersja 1.0.31, wymaga Pythona ≥ 3.11):
 - jeden `CopilotClient` na cały czas życia aplikacji (start w `lifespan`, zamknięcie w `aclose`),
-- na każde wywołanie nowa sesja: `create_session(model=LLM_MODEL, system_message={"mode": "replace", "content": system}, available_tools=[], on_permission_request=...)`, potem `send_and_wait(prompt, timeout=...)`,
+- `list_models()`: `CopilotClient.list_models()` (zwraca `id` i `name` dla modeli dostępnych w subskrypcji), z `source="provider"`; wynik buforowany na 10 minut,
+- na każde wywołanie nowa sesja: `create_session(model=model, system_message={"mode": "replace", "content": system}, available_tools=[], on_permission_request=...)`, potem `send_and_wait(prompt, timeout=...)`,
 - tryb strukturalny: `send_and_wait(..., response_schema=schema)` lub `send_and_wait_typed(prompt, response_type=schema)`,
 - uwierzytelnienie: zalogowany użytkownik GitHub CLI lub Copilot albo token w `COPILOT_GITHUB_TOKEN` / `GH_TOKEN` / `GITHUB_TOKEN` (SDK czyta je sam),
 - runtime pobierany przez `python -m copilot download-runtime` (opisać w README).
 
-**Provider `fake`:** deterministyczne odpowiedzi zgodne ze schematami (np. stała odpowiedź rozmówcy i przykładowa lekcja). Służy do testów, pracy bez internetu i demonstracji UI. W testach **żaden test nie woła prawdziwego LLM**.
+**Provider `fake`:** deterministyczne odpowiedzi zgodne ze schematami (np. stała odpowiedź rozmówcy i przykładowa lekcja). `list_models()` zwraca `fake-main` i `fake-fast`, a w wyniku podaje użyty model, więc da się testować wybór modelu. Służy do testów, pracy bez internetu i demonstracji UI. W testach **żaden test nie woła prawdziwego LLM**.
 
 **Rejestr:** `PROVIDERS = {"claude_code": ClaudeCodeProvider, "copilot": CopilotProvider, "fake": FakeProvider}`. Nowy provider (np. API Anthropic w przyszłości) to nowa klasa i jeden wpis w słowniku. Nieznana wartość `LLM_PROVIDER` przerywa start i wypisuje dostępne opcje.
 
 ### 5.4 Konfiguracja (`.env`, plik `.env.example` w repo)
 
 ```dotenv
-# LLM
+# LLM: provider
 LLM_PROVIDER=claude_code        # claude_code | copilot | fake
-LLM_MODEL=                      # opcjonalnie; puste = domyślny model providera (np. claude-opus-5-5 dla claude_code)
 LLM_TIMEOUT_SECONDS=90
-CLAUDE_CODE_CLI_PATH=           # opcjonalnie, własna ścieżka do CLI claude
+
+# LLM: modele (puste = domyślny model providera; *_FAST puste = ten sam co główny)
+CLAUDE_CODE_MODEL=claude-opus-5-5
+CLAUDE_CODE_MODEL_FAST=claude-haiku-5-5
+CLAUDE_CODE_MODELS=claude-opus-5-5,claude-sonnet-5-5,claude-haiku-5-5   # lista do wyboru w UI
+COPILOT_MODEL=                  # np. identyfikator z listy w ustawieniach aplikacji
+COPILOT_MODEL_FAST=
+
+# LLM: opcjonalne ścieżki i uwierzytelnienie
+CLAUDE_CODE_CLI_PATH=           # własna ścieżka do CLI claude
 # Copilot: COPILOT_CLI_PATH / COPILOT_GITHUB_TOKEN są czytane bezpośrednio przez SDK
 
 # App
@@ -223,6 +274,9 @@ PORT=8000
 | `conversation_message` | id, conversation_id, role, content, feedback (JSON: poprawki i sugestie), created_at | |
 | `activity` | id, kind, points, ref_type, ref_id, occurred_at | źródło serii dni, punktów i wykresu |
 | `achievement_unlock` | id, achievement_key, unlocked_at | |
+| `app_setting` | key (PK), value (JSON), updated_at | m.in. nadpisania modeli `llm.<provider>.<tier>` |
+
+Kolumna **`model`** (nazwa modelu, który wygenerował treść) jest w: `conversation_message` (dla wiadomości AI), `lesson`, `conversation` (podsumowanie) i w `phrase.ai_explanation`. Wyjaśnienie frazy z cache jest używane niezależnie od modelu; przycisk „Wygeneruj ponownie” tworzy nowe.
 
 Migracje Alembic od pierwszej wersji. Plik bazy tworzy się automatycznie przy pierwszym starcie.
 
@@ -235,6 +289,14 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 - „dzisiaj” liczone w strefie `APP_TIMEZONE`; zegar wstrzykiwany (`core/clock.py`).
 
 ### 5.7 Moduły: zachowanie
+
+**Która klasa modelu do czego:**
+
+| Zadanie | Klasa |
+|---|---|
+| odpowiedź rozmówcy w scence z poprawkami, podsumowanie rozmowy | `main` |
+| generowanie lekcji (słówka, gramatyka, temat pisania), ocena swobodnego pisania, wynik testu poziomującego | `main` |
+| podpowiedź w rozmowie, ocena zdania w powtórkach, wyjaśnienie frazy, ocena otwartej odpowiedzi w lekcji | `fast` |
 
 **profile:** pierwsze uruchomienie (gdy `onboarding_done = false`) przekierowuje na onboarding. Kroki: imię (opcjonalne), język ojczysty (domyślnie polski), cele (wielokrotny wybór), dzienny cel XP, a potem **test poziomujący** (z modułu lessons) albo samoocena A1–C2.
 
@@ -279,7 +341,11 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 |---|---|
 | `GET /health` | status aplikacji |
 | `GET /modules` | włączone moduły (klucz, tytuł) |
-| `GET /llm/status` | `ProviderStatus` |
+| `GET /llm/status` | `ProviderStatus` (provider, aktywny model dla `main` i `fast`, dostępność) |
+| `GET /llm/models` | lista `ModelInfo` aktywnego providera |
+| `GET /llm/settings` | dla każdej klasy: model z `.env`, nadpisanie z UI i model efektywny |
+| `PUT /llm/settings` | `{main?: str \| null, fast?: str \| null, allow_custom?: bool}`; `null` usuwa nadpisanie i przywraca wartość z `.env` |
+| `POST /llm/test` | `{tier}` lub `{model}`: krótkie zapytanie testowe → `{ok, model, latency_ms, detail}` |
 | `GET /profile`, `PUT /profile` | profil ucznia |
 | `GET /phrases/sections` | poziomy i sekcje z liczbami (wszystkie, w nauce, opanowane) |
 | `GET /phrases?section=&status=` | lista fraz ze stanem SRS |
@@ -321,6 +387,7 @@ Błędy mają jednolity format `{error: {code, message}}`, gdzie `message` jest 
   - **mikrointerakcje**: animacja odwracania karty, „+XP” wyskakujące po odpowiedzi, konfetti przy celu dnia i osiągnięciu, płynne przejścia między ekranami,
   - **rozmowa**: interfejs jak w komunikatorze, wskaźnik „pisze…”, poprawki rozwijane pod wiadomością, przycisk podpowiedzi,
   - responsywność od telefonu po desktop; obsługa klawiatury; szanowanie `prefers-reduced-motion`; widoczne stany fokusu,
+  - **ustawienia → „Model AI”**: aktywny provider (tylko do odczytu, zmiana w `.env`), dwie listy wyboru (główny i szybki) wypełnione z `GET /llm/models`, pole „własny identyfikator”, przycisk „Testuj” z czasem odpowiedzi i „Przywróć z .env”. Nazwa aktualnego modelu jest też widoczna w nagłówku rozmowy (mała etykieta),
   - **stany błędów LLM**: gdy provider jest niedostępny, baner z instrukcją (np. „Zaloguj się w Claude Code: `claude login`”), a moduły bez LLM (frazy, powtórki z oceną własną, dashboard) **działają dalej**.
 - Vite proxy `/api` → `http://127.0.0.1:8000` w trybie deweloperskim.
 
@@ -337,10 +404,10 @@ Każdy etap kończy się działającą aplikacją i osobnym commitem.
 
 | Etap | Zakres | Wynik |
 |---|---|---|
-| A | Szkielet backendu: `core/*`, migracje, rejestr modułów, szyna zdarzeń, `llm/*` z 3 providerami, `/health`, `/modules`, `/llm/status`, `.env.example` | `python -m english_app` startuje; `/api/llm/status` raportuje stan providera |
+| A | Szkielet backendu: `core/*`, migracje, rejestr modułów, szyna zdarzeń, `llm/*` z 3 providerami, `LLMService` i `ModelResolver`, tabela `app_setting`, `/health`, `/modules`, `/llm/status`, `/llm/models`, `/llm/settings`, `/llm/test`, `.env.example` | `python -m english_app` startuje; `/api/llm/status` raportuje providera i modele |
 | B | Moduły `profile`, `phrases` (+ skrypt i seed), `review` | API fraz i powtórek działa na providerze `fake` |
 | C | Moduł `progress` (zdarzenia, XP, seria, osiągnięcia, rekomendacja) | dashboard API zwraca poprawne dane |
-| D | Frontend: szkielet, system komponentów, motyw, onboarding, dashboard, frazy, powtórki | pełny przepływ „nauka nowych fraz → powtórka → XP na dashboardzie” w przeglądarce |
+| D | Frontend: szkielet, system komponentów, motyw, onboarding, dashboard, frazy, powtórki, ustawienia „Model AI” | pełny przepływ „nauka nowych fraz → powtórka → XP na dashboardzie” w przeglądarce |
 | E | Moduł `conversation` (backend + frontend) | rozmowa w scence z poprawkami i podsumowaniem |
 | F | Moduł `lessons` (4 typy) + test poziomujący w onboardingu (backend + frontend) | lekcje generowane, oceniane i zapisywane |
 | G | Tryb „jedna komenda”, README, porządki | aplikacja uruchamia się jedną komendą zgodnie z README |
@@ -350,11 +417,22 @@ Każdy etap kończy się działającą aplikacją i osobnym commitem.
 ### Konfiguracja i LLM
 - [ ] Zmiana `LLM_PROVIDER` w `.env` między `claude_code`, `copilot` i `fake` (i restart) przełącza providera **bez zmian w kodzie**. `GET /api/llm/status` pokazuje aktywnego providera i model.
 - [ ] Nieznana wartość `LLM_PROVIDER` zatrzymuje start z komunikatem wymieniającym dostępne providery.
-- [ ] Wszystkie moduły korzystają z LLM **wyłącznie** przez interfejs `LLMProvider` (żaden moduł nie importuje `claude_agent_sdk` ani `copilot`).
+- [ ] Wszystkie moduły korzystają z LLM **wyłącznie** przez `LLMService` (żaden moduł nie importuje `claude_agent_sdk`, `copilot` ani konkretnego providera).
 - [ ] Oba prawdziwe providery uruchamiają model **bez narzędzi**: Claude z `tools=[]`, Copilot z `available_tools=[]` i odmową uprawnień, oba w pustym katalogu roboczym. Po rozmowie z AI w katalogu projektu nie przybywa żadnych plików.
 - [ ] Gdy CLI nie jest zainstalowane lub zalogowane, endpointy LLM zwracają 503 z polskim komunikatem i instrukcją, a frazy, powtórki z oceną własną i dashboard działają dalej.
 - [ ] `complete_structured` zwraca obiekt zgodny ze schematem; przy niepoprawnym JSON wykonuje dokładnie jedno ponowienie, a potem zwraca 502.
 - [ ] Logi nie zawierają treści wiadomości użytkownika ani odpowiedzi modelu.
+
+### Wybór modelu
+- [ ] Model z `CLAUDE_CODE_MODEL` / `COPILOT_MODEL` jest przekazywany do SDK dla zadań klasy `main`, a z `*_MODEL_FAST` dla zadań klasy `fast` (podział według tabeli w sekcji 5.7).
+- [ ] Gdy `*_MODEL_FAST` jest puste, zadania `fast` używają modelu głównego; gdy oba są puste, do SDK trafia `None` (domyślny model providera).
+- [ ] Zmiana modelu w ustawieniach UI działa **od następnego wywołania, bez restartu**, i przetrwa restart aplikacji (zapis w `app_setting`).
+- [ ] „Przywróć z .env” usuwa nadpisanie, a `GET /api/llm/settings` pokazuje znowu wartość z `.env` jako efektywną.
+- [ ] Nadpisania są osobne dla każdego providera: po zmianie `LLM_PROVIDER` z `claude_code` na `copilot` nie jest używany model Claude.
+- [ ] `GET /api/llm/models` dla Copilot zwraca listę z SDK, dla Claude Code listę z `CLAUDE_CODE_MODELS`, dla `fake` modele `fake-main` i `fake-fast`.
+- [ ] Zapis modelu spoza listy bez `allow_custom: true` zwraca 422 z polskim komunikatem.
+- [ ] „Testuj” pokazuje model, czas odpowiedzi i ewentualny błąd (np. „model niedostępny w Twojej subskrypcji”).
+- [ ] Każda wiadomość AI w rozmowie, każda lekcja i każde wyjaśnienie frazy ma zapisany model, który je wygenerował, a nagłówek rozmowy pokazuje aktualny model.
 
 ### Modułowość
 - [ ] Usunięcie modułu z `ENABLED_MODULES` (np. `lessons`) ukrywa go w API (404 dla jego tras) i w menu frontendu, a reszta działa.
@@ -395,13 +473,14 @@ Każdy etap kończy się działającą aplikacją i osobnym commitem.
 1. **Interpretacja „Cło”** jako CLI/SDK (subskrypcje) wymaga potwierdzenia przy review. Jeśli chodziło o coś innego, zmieniamy sekcję 5.3 przed etapem A.
 2. **Opóźnienia:** każde wywołanie uruchamia proces CLI (Claude) lub sesję (Copilot), więc odpowiedź może trwać kilka sekund. UI musi pokazywać stan oczekiwania. Optymalizacja (utrzymywanie sesji per rozmowa) dopiero w razie potrzeby.
 3. **Warunki subskrypcji:** przed etapem A sprawdzić aktualne zasady korzystania z subskrypcji Claude przez Agent SDK oraz limity „premium requests” w Copilot (koszt i limity są po stronie użytkownika).
-4. **Zmienność SDK:** oba SDK szybko się rozwijają (wersje 0.2.x i 1.0.x). Przypinamy wersje w `pyproject.toml`; kod SDK zamykamy w jednym pliku providera.
-5. **Jakość JSON z modelu:** ryzyko ogranicza tryb strukturalny SDK, walidacja Pydantic i jedno ponowienie.
-6. **Push do GitHub:** obecna sesja nie ma uprawnień do zapisu w `pawelkonikpl/english` (błąd 403). Commity czekają lokalnie do czasu podłączenia GitHub.
+4. **Nazwy modeli:** Claude Agent SDK nie udostępnia listy modeli, więc lista dla Claude Code pochodzi z konfiguracji i może się zestarzeć; dlatego jest pole „własny identyfikator” i przycisk „Testuj”. Nazwy modeli Copilot różnią się od nazw Anthropic (np. format z kropką), więc nie przenosimy ich między providerami. Pole `ResultMessage.model_usage` jako źródło nazwy faktycznie użytego modelu trzeba potwierdzić w etapie A; jeśli go brak, zapisujemy model żądany.
+5. **Zmienność SDK:** oba SDK szybko się rozwijają (wersje 0.2.x i 1.0.x). Przypinamy wersje w `pyproject.toml`; kod SDK zamykamy w jednym pliku providera.
+6. **Jakość JSON z modelu:** ryzyko ogranicza tryb strukturalny SDK, walidacja Pydantic i jedno ponowienie.
+7. **Push do GitHub:** obecna sesja nie ma uprawnień do zapisu w `pawelkonikpl/english` (błąd 403). Commity czekają lokalnie do czasu podłączenia GitHub.
 
 ## 9. Następne kroki (proces)
 
 1. **Review planu (użytkownik):** sprawdzić decyzje (sekcja 2), zakres MVP i kryteria. Poprawki wprowadzamy w tym pliku.
 2. **Krok 2, implementacja etapami A–G:** nowa sesja zaczyna od „zaimplementuj etap A z `.github/task/english-learning-app.md`”.
-3. **Krok 4, testy:** pytest (SRS, seria dni, rekomendacja, seed, API na providerze `fake`, rejestr modułów i providerów) oraz testy komponentów frontendu dla kluczowych ekranów.
+3. **Krok 4, testy:** pytest (SRS, seria dni, rekomendacja, seed, API na providerze `fake`, rejestr modułów i providerów, kolejność wyboru modelu w `ModelResolver`) oraz testy komponentów frontendu dla kluczowych ekranów.
 4. **Krok 5, weryfikacja:** checklista przed scaleniem na podstawie tego pliku.
