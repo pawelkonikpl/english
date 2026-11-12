@@ -1,5 +1,5 @@
 # Local English learning app: FastAPI backend + React frontend.
-.PHONY: install backend frontend dev build run test
+.PHONY: install backend frontend dev build run test docker docker-down
 
 install:
 	cd backend && uv sync
@@ -26,3 +26,10 @@ run: build
 test:
 	cd backend && uv run pytest
 	cd frontend && npm test
+
+# Docker: build and start in the background (http://127.0.0.1:8000); data lives in a volume.
+docker:
+	docker compose up --build -d
+
+docker-down:
+	docker compose down

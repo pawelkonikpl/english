@@ -52,7 +52,10 @@ _AUTH_HINTS = ("login", "log in", "authenticat", "unauthorized", "api key")
 CLI_NOT_FOUND_HELP = (
     "Nie znaleziono Claude Code CLI. Zainstaluj Claude Code albo ustaw CLAUDE_CODE_CLI_PATH."
 )
-LOGIN_HELP = "Zaloguj się w Claude Code poleceniem `claude` (a potem /login) i spróbuj ponownie."
+LOGIN_HELP = (
+    "Zaloguj się w Claude Code poleceniem `claude` (a potem /login). "
+    "W Dockerze ustaw CLAUDE_CODE_OAUTH_TOKEN w pliku .env (token da `claude setup-token`)."
+)
 
 
 class ClaudeCodeProvider(LLMProvider):

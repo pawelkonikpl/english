@@ -36,6 +36,20 @@ Tryb deweloperski (przeładowanie po zmianach): `make dev`, a potem otwórz http
 
 Bez `uv`: `python -m venv .venv && source .venv/bin/activate && pip install -e backend`, a potem `python -m english_app`.
 
+### Docker
+
+```bash
+cp .env.example .env        # LLM_PROVIDER, modele i token (patrz niżej)
+make docker                 # = docker compose up --build -d  ->  http://127.0.0.1:8000
+make docker-down            # zatrzymanie; postępy zostają w wolumenie speak-up-data
+```
+
+Kontener nie widzi logowań z Twojego komputera, więc w `.env` podaj token:
+- **Claude Code:** uruchom u siebie `claude setup-token` i wklej wynik jako `CLAUDE_CODE_OAUTH_TOKEN=...`,
+- **GitHub Copilot:** `COPILOT_GITHUB_TOKEN=...` (token GitHub z dostępem do Copilota); runtime Copilota pobierze się przy pierwszym użyciu albo od razu przy budowie: `WITH_COPILOT_RUNTIME=true make docker`.
+
+Aplikacja nasłuchuje tylko na `127.0.0.1` (nie ma logowania, więc nie jest wystawiona w sieci). Za firmowym proxy z własnym certyfikatem dodaj przy budowie `--secret id=ca,src=/ścieżka/ca.crt` (certyfikat nie trafia do obrazu).
+
 ### Wybór modelu AI (`.env`)
 
 | Zmienna | Znaczenie |

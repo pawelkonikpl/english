@@ -1,0 +1,26 @@
+# docker compose up --build   ->   http://127.0.0.1:8000
+services:
+  app:
+    build:
+      context: .
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-slim}
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.13-slim}
+        WITH_COPILOT_RUNTIME: ${WITH_COPILOT_RUNTIME:-false}
+    image: speak-up:latest
+    # Settings and secrets (LLM_PROVIDER, models, CLAUDE_CODE_OAUTH_TOKEN, COPILOT_GITHUB_TOKEN).
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      HOST: 0.0.0.0
+      DATABASE_URL: sqlite+aiosqlite:////app/data/english.db
+    # Local only: the app has no login, so it is not published on the network.
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - speak-up-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  speak-up-data:

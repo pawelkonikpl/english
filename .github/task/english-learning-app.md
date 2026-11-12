@@ -425,6 +425,7 @@ Każdy etap kończy się działającą aplikacją i osobnym commitem.
 | E | Moduł `conversation` (backend + frontend) | rozmowa w scence z poprawkami i podsumowaniem |
 | F | Moduł `lessons` (4 typy) + test poziomujący w onboardingu (backend + frontend) | lekcje generowane, oceniane i zapisywane |
 | G | Tryb „jedna komenda”, README, porządki | aplikacja uruchamia się jedną komendą zgodnie z README |
+| H | Docker: wieloetapowy `Dockerfile` (budowa frontendu w Node, backend w Pythonie z uv), `compose.yaml` z wolumenem na bazę, port tylko na `127.0.0.1`, użytkownik bez uprawnień roota, healthcheck; tokeny `CLAUDE_CODE_OAUTH_TOKEN` / `COPILOT_GITHUB_TOKEN` w `.env`; opcjonalny certyfikat proxy jako sekret budowania | `make docker` uruchamia aplikację w kontenerze; dane przetrwają restart |
 
 ## 7. Kryteria akceptacji
 
