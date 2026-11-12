@@ -25,6 +25,10 @@ Lista fraz z `resources/communication-phrases-pl.md` staje się **jednym z modu�
 | Użytkownicy | **Jeden użytkownik, lokalnie**, bez logowania |
 | Moduły w MVP | **wszystkie cztery**: Frazy + powtórki, Rozmowa z AI, Lekcje AI, Dashboard i motywacja |
 | Wybór modelu | Model **określany osobno dla każdego providera** w `.env`, w dwóch klasach: `main` (rozmowa, generowanie lekcji) i `fast` (szybkie oceny, podpowiedzi, wyjaśnienia). Można go **zmienić w ustawieniach aplikacji** (nadpisanie zapisane w bazie) z listy dostępnych modeli. Każda odpowiedź AI zapisuje, jaki model ją wygenerował. |
+| XP za pisanie | Lekcja swobodnego pisania daje tyle XP, ile wynosi ocena AI (0–10). *(Decyzja po review.)* |
+| Frazy od AI | Frazy dodane z podsumowania rozmowy nie liczą się do dziennego limitu nowych fraz i nie mają własnego limitu. *(Decyzja po review.)* |
+| Etykieta modelu w rozmowie | Pokazuje model, który napisał ostatnią odpowiedź AI (a nie model wybrany w ustawieniach). *(Decyzja po review.)* |
+| „Przećwicz w rozmowie” | Przycisk w sekcji fraz jest ukryty, gdy moduł `conversation` jest wyłączony. *(Decyzja po review.)* |
 
 ## 3. Kontekst w repozytorium (stan obecny)
 

@@ -6,12 +6,9 @@ import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 
 import { MODULE_NAV, type ModuleNavEntry } from "@/modules/registry";
 import { api, queryKeys } from "@/shared/api/endpoints";
+import { useEnabledModules } from "@/shared/api/use-modules";
 import { cn } from "@/shared/lib/cn";
 import { EmptyState, Spinner } from "@/shared/ui/states";
-
-function useEnabledModules() {
-  return useQuery({ queryKey: queryKeys.modules, queryFn: api.modules, staleTime: Infinity });
-}
 
 function useNavEntries(): ModuleNavEntry[] {
   const { data: modules } = useEnabledModules();

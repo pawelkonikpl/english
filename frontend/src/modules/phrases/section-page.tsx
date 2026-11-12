@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 
 import { api, queryKeys } from "@/shared/api/endpoints";
+import { useModuleEnabled } from "@/shared/api/use-modules";
 import type { Phrase, PhraseStatus } from "@/shared/api/schemas";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -66,6 +67,7 @@ export function SectionPage() {
     queryFn: () => api.phrases(code),
   });
   const title = phrases.data?.[0]?.section_title;
+  const canPractise = useModuleEnabled("conversation");
 
   return (
     <div>
@@ -76,11 +78,13 @@ export function SectionPage() {
         title={title ?? code}
         subtitle={`Sekcja ${code}`}
         actions={
-          <Link to={`/conversation?section=${encodeURIComponent(code)}`}>
-            <Button variant="secondary">
-              <MessagesSquare className="size-4" aria-hidden /> Przećwicz w rozmowie
-            </Button>
-          </Link>
+          canPractise && (
+            <Link to={`/conversation?section=${encodeURIComponent(code)}`}>
+              <Button variant="secondary">
+                <MessagesSquare className="size-4" aria-hidden /> Przećwicz w rozmowie
+              </Button>
+            </Link>
+          )
         }
       />
       {phrases.isPending && <Spinner />}

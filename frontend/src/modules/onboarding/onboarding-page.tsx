@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, Rocket, Sparkles, Target } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, type ReactNode } from "react";
@@ -6,6 +6,7 @@ import { useNavigate } from "react-router";
 
 import { errorMessage } from "@/shared/api/client";
 import { api, queryKeys } from "@/shared/api/endpoints";
+import { useModuleEnabled } from "@/shared/api/use-modules";
 import type { CefrLevel } from "@/shared/api/schemas";
 import { celebrate } from "@/shared/lib/celebrate";
 import { cn } from "@/shared/lib/cn";
@@ -79,8 +80,7 @@ export function OnboardingPage() {
   const [level, setLevel] = useState<CefrLevel>("A2");
   const [dailyGoal, setDailyGoal] = useState(20);
   const [testing, setTesting] = useState(false);
-  const modules = useQuery({ queryKey: queryKeys.modules, queryFn: api.modules, staleTime: Infinity });
-  const canTest = modules.data?.some((m) => m.key === "lessons") ?? false;
+  const canTest = useModuleEnabled("lessons");
 
   const finish = useMutation({
     mutationFn: () =>
