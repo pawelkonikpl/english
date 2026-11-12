@@ -1,0 +1,141 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+/* Dark mode follows data-theme on <html>, set by the theme provider (system by default). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+  --color-good: #0ca30c;
+  --color-warning: #fab219;
+  --color-critical: #d03b3b;
+
+  /* Data colors: validated reference palette (dataviz skill), stepped per theme. */
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-heat-0: var(--heat-0);
+  --color-heat-1: var(--heat-1);
+  --color-heat-2: var(--heat-2);
+  --color-heat-3: var(--heat-3);
+  --color-heat-4: var(--heat-4);
+  --color-heat-5: var(--heat-5);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-flicker: flicker 1.6s ease-in-out infinite;
+}
+
+:root {
+  color-scheme: light;
+  --surface: #f6f5fb;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eceaf4;
+  --line: #e2dfee;
+  --ink: #15131f;
+  --ink-soft: #4b4760;
+  --ink-muted: #7a7690;
+  --brand: #6d4aff;
+  --brand-soft: #ece7ff;
+  --brand-ink: #4b2ee0;
+
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --heat-0: #eceaf4;
+  --heat-1: #b7d3f6;
+  --heat-2: #86b6ef;
+  --heat-3: #3987e5;
+  --heat-4: #256abf;
+  --heat-5: #104281;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #0c0b12;
+  --surface-raised: #16151f;
+  --surface-sunken: #1f1d2b;
+  --line: #2b2939;
+  --ink: #f1effa;
+  --ink-soft: #c4c0d8;
+  --ink-muted: #8f8aa8;
+  --brand: #8b70ff;
+  --brand-soft: #241d45;
+  --brand-ink: #b9a9ff;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --heat-0: #1f1d2b;
+  --heat-1: #184f95;
+  --heat-2: #1c5cab;
+  --heat-3: #2a78d6;
+  --heat-4: #5598e7;
+  --heat-5: #9ec5f4;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-surface text-ink font-sans antialiased;
+}
+
+.bg-brand-gradient {
+  background-image: linear-gradient(135deg, #6d4aff 0%, #c04dff 45%, #ff7a59 100%);
+}
+
+.text-brand-gradient {
+  background-image: linear-gradient(135deg, #6d4aff 0%, #c04dff 45%, #ff7a59 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.card-flip {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.08) rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -384,7 +384,7 @@ Błędy mają jednolity format `{error: {code, message}}`, gdzie `message` jest 
 
 ### 5.10 Frontend
 
-- **Stos:** React + TypeScript + Vite, Tailwind CSS, komponenty w stylu shadcn/ui (Radix), animacje `motion` (Framer Motion), TanStack Query (dane i cache), React Router, ikony `lucide-react`, `canvas-confetti` (świętowanie), Recharts (wykres i heatmapa).
+- **Stos:** React + TypeScript + Vite, Tailwind CSS, komponenty w stylu shadcn/ui (Radix), animacje `motion` (Framer Motion), TanStack Query (dane i cache), React Router, ikony `lucide-react`, `canvas-confetti` (świętowanie), zod (walidacja odpowiedzi API). Pierścień celu i heatmapa są zrobione w SVG/CSS bez biblioteki wykresów, z paletą zgodną z zasadami dostępności kolorów.
 - **Modułowość:** `src/modules/<moduł>/` eksportuje trasy i pozycję menu; `src/modules/index.ts` je rejestruje, a menu pokazuje tylko moduły zwrócone przez `GET /api/modules`.
 - **Wygląd, który zachęca do nauki:**
   - jasny i ciemny motyw (domyślnie według systemu), wyrazisty gradientowy akcent, duże zaokrąglone karty, czytelna typografia (np. Inter),
