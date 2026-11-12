@@ -3,6 +3,9 @@ import { createBrowserRouter } from "react-router";
 import { ChatPage } from "@/modules/conversation/chat-page";
 import { ConversationPage } from "@/modules/conversation/conversation-page";
 import { DashboardPage } from "@/modules/dashboard/dashboard-page";
+import { LessonPage } from "@/modules/lessons/lesson-page";
+import { LessonsPage } from "@/modules/lessons/lessons-page";
+import { PlacementPage } from "@/modules/lessons/placement-page";
 import { OnboardingPage } from "@/modules/onboarding/onboarding-page";
 import { LearnPage } from "@/modules/phrases/learn-page";
 import { PhrasesPage } from "@/modules/phrases/phrases-page";
@@ -71,6 +74,30 @@ export const router = createBrowserRouter([
         element: (
           <ModuleGate moduleKey="conversation">
             <ChatPage />
+          </ModuleGate>
+        ),
+      },
+      {
+        path: "lessons",
+        element: (
+          <ModuleGate moduleKey="lessons">
+            <LessonsPage />
+          </ModuleGate>
+        ),
+      },
+      {
+        path: "lessons/placement",
+        element: (
+          <ModuleGate moduleKey="lessons">
+            <PlacementPage />
+          </ModuleGate>
+        ),
+      },
+      {
+        path: "lessons/:id",
+        element: (
+          <ModuleGate moduleKey="lessons">
+            <LessonPage />
           </ModuleGate>
         ),
       },

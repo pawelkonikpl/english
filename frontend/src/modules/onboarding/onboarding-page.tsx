@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Check, Rocket, Sparkles } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Check, Rocket, Sparkles, Target } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
@@ -10,6 +10,8 @@ import type { CefrLevel } from "@/shared/api/schemas";
 import { celebrate } from "@/shared/lib/celebrate";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui/button";
+
+import { PlacementTest } from "../lessons/placement-test";
 
 const GOALS = [
   "Rozmowy na co dzień",
@@ -76,6 +78,9 @@ export function OnboardingPage() {
   const [goals, setGoals] = useState<string[]>([]);
   const [level, setLevel] = useState<CefrLevel>("A2");
   const [dailyGoal, setDailyGoal] = useState(20);
+  const [testing, setTesting] = useState(false);
+  const modules = useQuery({ queryKey: queryKeys.modules, queryFn: api.modules, staleTime: Infinity });
+  const canTest = modules.data?.some((m) => m.key === "lessons") ?? false;
 
   const finish = useMutation({
     mutationFn: () =>
@@ -130,15 +135,27 @@ export function OnboardingPage() {
       title: "Jak oceniasz swój angielski?",
       subtitle: "Bez stresu: poziom zmienisz później w ustawieniach.",
       body: (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {LEVELS.map((l) => (
-            <Choice key={l.level} selected={level === l.level} onClick={() => setLevel(l.level)}>
-              <span className="block font-semibold">
-                {l.level} · {l.title}
-              </span>
-              <span className="block text-sm text-ink-soft">{l.description}</span>
-            </Choice>
-          ))}
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {LEVELS.map((l) => (
+              <Choice key={l.level} selected={level === l.level} onClick={() => setLevel(l.level)}>
+                <span className="block font-semibold">
+                  {l.level} · {l.title}
+                </span>
+                <span className="block text-sm text-ink-soft">{l.description}</span>
+              </Choice>
+            ))}
+          </div>
+          {canTest &&
+            (testing ? (
+              <div className="rounded-3xl bg-surface-raised p-5 ring-1 ring-line">
+                <PlacementTest selfLevel={level} onResult={(result) => setLevel(result.level)} />
+              </div>
+            ) : (
+              <Button variant="secondary" className="w-fit" onClick={() => setTesting(true)}>
+                <Target className="size-4" aria-hidden /> Nie wiem, zrób krótki test z AI
+              </Button>
+            ))}
         </div>
       ),
     },

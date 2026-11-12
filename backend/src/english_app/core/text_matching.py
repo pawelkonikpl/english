@@ -1,4 +1,4 @@
-"""Tolerant comparison of a typed answer with the expected phrase."""
+"""Tolerant comparison of a typed answer with the expected text (shared by modules)."""
 
 import re
 import unicodedata

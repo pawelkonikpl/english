@@ -7,11 +7,11 @@ from english_app.core.clock import Clock
 from english_app.core.errors import NotFoundError
 from english_app.core.events import ActivityKind, EventBus, LearningActivity
 from english_app.core.prompts import PromptRenderer
+from english_app.core.text_matching import is_correct
 from english_app.llm.base import ChatMessage, LLMResult, ModelTier
 from english_app.llm.service import LLMService
 from english_app.modules.profile.public import get_learner_context
 from english_app.modules.review.cards import CardContent, load_cards
-from english_app.modules.review.matching import is_correct
 from english_app.modules.review.models import ReviewItem, ReviewLog
 from english_app.modules.review.repository import ReviewRepository
 from english_app.modules.review.schemas import ReviewMode, SentenceCheck

@@ -287,3 +287,90 @@ export const hintListSchema = z.object({
 export type HintList = z.infer<typeof hintListSchema>;
 
 export const addPhraseSchema = z.object({ phrase_id: z.number(), newly_enrolled: z.boolean() });
+
+// --- lessons --------------------------------------------------------------
+export const lessonTypeSchema = z.enum(["vocabulary", "grammar", "writing", "placement"]);
+export type LessonType = z.infer<typeof lessonTypeSchema>;
+
+export const lessonSchema = z.object({
+  id: z.number(),
+  type: lessonTypeSchema,
+  topic: z.string(),
+  level: z.string(),
+  status: z.enum(["in_progress", "completed"]),
+  score: z.number().nullable(),
+  max_score: z.number().nullable(),
+  model: z.string().nullable(),
+  created_at: z.string(),
+  words: z.array(
+    z.object({
+      word: z.string(),
+      phonetic: z.string(),
+      translation: z.string(),
+      mnemonic: z.string(),
+      examples: z.array(z.string()),
+    }),
+  ),
+  explanation: z.string().nullable(),
+  examples: z.array(z.object({ english: z.string(), note: z.string() })),
+  exercises: z.array(
+    z.object({
+      index: z.number(),
+      kind: z.string(),
+      instruction: z.string(),
+      prompt: z.string(),
+      hint: z.string().nullable(),
+      result: z
+        .object({
+          answer: z.string(),
+          correct: z.boolean(),
+          expected: z.string(),
+          explanation: z.string().nullable(),
+        })
+        .nullable(),
+    }),
+  ),
+  writing: z
+    .object({
+      prompt: z.string(),
+      instructions: z.string(),
+      min_words: z.number(),
+      useful_phrases: z.array(z.string()),
+    })
+    .nullable(),
+  writing_text: z.string().nullable(),
+  writing_feedback: z
+    .object({
+      score: z.number(),
+      strengths: z.array(z.string()),
+      errors: z.array(z.object({ fragment: z.string(), correction: z.string(), explanation: z.string() })),
+      corrected_text: z.string(),
+    })
+    .nullable(),
+});
+export type Lesson = z.infer<typeof lessonSchema>;
+export type Exercise = Lesson["exercises"][number];
+
+export const lessonListItemSchema = z.object({
+  id: z.number(),
+  type: lessonTypeSchema,
+  topic: z.string(),
+  status: z.enum(["in_progress", "completed"]),
+  score: z.number().nullable(),
+  max_score: z.number().nullable(),
+  created_at: z.string(),
+});
+
+export const placementQuestionsSchema = z.object({
+  band: z.string(),
+  translation_source: z.string(),
+  correction_source: z.string(),
+});
+
+export const placementResultSchema = z.object({
+  level: cefrLevelSchema,
+  explanation: z.string(),
+  next_steps: z.array(z.string()),
+  model: z.string().nullable(),
+});
+export type PlacementResult = z.infer<typeof placementResultSchema>;

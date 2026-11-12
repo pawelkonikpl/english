@@ -2,6 +2,12 @@ import { z } from "zod";
 
 import { json, request } from "./client";
 import {
+  lessonListItemSchema,
+  lessonSchema,
+  placementQuestionsSchema,
+  placementResultSchema,
+  type CefrLevel,
+  type LessonType,
   addPhraseSchema,
   appModuleSchema,
   conversationListItemSchema,
@@ -56,6 +62,9 @@ export const queryKeys = {
   scenarios: ["conversation", "scenarios"] as const,
   conversations: ["conversation", "list"] as const,
   conversation: (id: number) => ["conversation", "detail", id] as const,
+  lessons: ["lessons", "list"] as const,
+  lesson: (id: number) => ["lessons", "detail", id] as const,
+  placement: (level: CefrLevel) => ["lessons", "placement", level] as const,
 };
 
 export type ModelSettingsUpdate = Partial<Record<ModelTier, string | null>> & {
@@ -122,4 +131,23 @@ export const api = {
     request(`/conversation/${id}/finish`, conversationSchema, { method: "POST" }),
   addConversationPhrase: (id: number, english: string, polish: string) =>
     request(`/conversation/${id}/phrases`, addPhraseSchema, post({ english, polish })),
+
+  lessons: () => request("/lessons", z.array(lessonListItemSchema)),
+  lesson: (id: number) => request(`/lessons/${id}`, lessonSchema),
+  createLesson: (type: Exclude<LessonType, "placement">, topic?: string) =>
+    request("/lessons", lessonSchema, post({ type, topic: topic || undefined })),
+  answerExercise: (id: number, exerciseIndex: number, answer: string) =>
+    request(`/lessons/${id}/answers`, lessonSchema, post({ exercise_index: exerciseIndex, answer })),
+  submitWriting: (id: number, text: string) =>
+    request(`/lessons/${id}/writing`, lessonSchema, post({ text })),
+  completeLesson: (id: number) =>
+    request(`/lessons/${id}/complete`, lessonSchema, { method: "POST" }),
+  placementQuestions: (selfLevel: CefrLevel) =>
+    request(`/lessons/placement?self_level=${selfLevel}`, placementQuestionsSchema),
+  runPlacement: (selfLevel: CefrLevel, translation: string, correction: string) =>
+    request(
+      "/lessons/placement",
+      placementResultSchema,
+      post({ self_level: selfLevel, translation, correction }),
+    ),
 };

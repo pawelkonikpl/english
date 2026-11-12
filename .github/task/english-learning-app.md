@@ -371,6 +371,9 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 | `GET /lessons`, `GET /lessons/{id}` | historia i szczegóły |
 | `POST /lessons/{id}/answers` | odpowiedź na ćwiczenie → ocena |
 | `POST /lessons/{id}/complete` | zakończenie, punkty, zapis słówek do SRS |
+| `POST /lessons/{id}/writing` | `{text}` → ocena tekstu przez AI; kończy lekcję pisania (XP = ocena 0–10) |
+| `GET /lessons/placement?self_level=` | zadania testu poziomującego dla pasma samooceny |
+| `POST /lessons/placement` | `{self_level, translation, correction}` → poziom od AI, zapisany w profilu |
 | `GET /progress/dashboard` | dane dashboardu (seria, XP dziś i cel, statystyki, rekomendacja) |
 | `GET /progress/activity?days=` | dane heatmapy |
 | `GET /progress/achievements` | lista osiągnięć z datami odblokowania |

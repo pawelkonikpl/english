@@ -38,6 +38,7 @@ class LearnerContext:
     native_language_name: str
     display_name: str | None
     daily_goal_xp: int
+    goals: list[str]
 
 
 def level_guidance(level: CefrLevel) -> str:
@@ -56,6 +57,7 @@ async def get_learner_context(session: AsyncSession) -> LearnerContext:
         native_language_name=LANGUAGE_NAMES.get(profile.native_language, profile.native_language),
         display_name=profile.display_name,
         daily_goal_xp=profile.daily_goal_xp,
+        goals=list(profile.goals),
     )
 
 

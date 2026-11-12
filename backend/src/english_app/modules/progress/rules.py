@@ -24,6 +24,10 @@ def points_for(activity: LearningActivity) -> float:
         case ActivityKind.CONVERSATION_FINISHED:
             score = float(details.get("score", 0))
             return max(0.0, min(score, MAX_CONVERSATION_POINTS))
+        case ActivityKind.LESSON_COMPLETED:
+            # Writing lessons have no closed answers; their 0-10 score is awarded on completion.
+            bonus = float(details.get("bonus_xp", 0))
+            return max(0.0, min(bonus, MAX_CONVERSATION_POINTS))
         case _:
             return 0.0
 
@@ -139,6 +143,15 @@ class RecommendationInput:
     phrases_enrolled_today: int
     recent_lesson_types: list[str]  # newest first
     enabled_modules: frozenset[str]
+
+
+def plural_pl(n: int, one: str, few: str, many: str) -> str:
+    """Polish plural form: 1 -> one, 2-4 (not 12-14) -> few, otherwise many."""
+    if n == 1:
+        return one
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return few
+    return many
 
 
 VOCABULARY = "vocabulary"
