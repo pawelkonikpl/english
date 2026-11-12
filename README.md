@@ -8,6 +8,66 @@
 
 ---
 
+## 🖥️ Aplikacja webowa (FastAPI + React)
+
+Oprócz systemu opartego na jednym pliku markdown repozytorium zawiera **lokalną aplikację** do nauki:
+
+- **Frazy do komunikacji**: 239 zwrotów z [`resources/communication-phrases-pl.md`](resources/communication-phrases-pl.md), nauka nowych fraz i dzienny limit,
+- **Powtórki**: powtórki w odstępach (1, 3, 7, 14, 30… dni), tryby: rozpoznawanie, wpisywanie i zdanie oceniane przez AI,
+- **Rozmowa z AI**: scenki (kawiarnia, spotkanie w pracy, lekarz…) z poprawkami po każdej wiadomości, podpowiedziami i podsumowaniem,
+- **Lekcje z AI**: słówka, gramatyka, swobodne pisanie, test poziomujący,
+- **Postępy**: seria dni, XP, cel dzienny, osiągnięcia, heatmapa aktywności i podpowiedź „Co dziś?”.
+
+### Wymagania
+
+- Python 3.11+ i [uv](https://docs.astral.sh/uv/) (albo zwykły `pip`),
+- Node.js 20+,
+- zalogowany **Claude Code** albo **GitHub Copilot** na tym samym komputerze (aplikacja korzysta z Twojej subskrypcji przez ich CLI).
+
+### Instalacja i uruchomienie
+
+```bash
+cp .env.example .env      # wybierz providera i modele
+make install              # zależności backendu (uv) i frontendu (npm)
+make run                  # buduje frontend i uruchamia wszystko: http://127.0.0.1:8000
+```
+
+Tryb deweloperski (przeładowanie po zmianach): `make dev`, a potem otwórz http://localhost:5173.
+
+Bez `uv`: `python -m venv .venv && source .venv/bin/activate && pip install -e backend`, a potem `python -m english_app`.
+
+### Wybór modelu AI (`.env`)
+
+| Zmienna | Znaczenie |
+|---|---|
+| `LLM_PROVIDER` | `claude_code` (subskrypcja Claude), `copilot` (subskrypcja GitHub Copilot) albo `fake` (przykładowe odpowiedzi bez AI, do testów) |
+| `CLAUDE_CODE_MODEL`, `CLAUDE_CODE_MODEL_FAST` | model główny (rozmowa, lekcje) i szybki (podpowiedzi, oceny zdań, wyjaśnienia) |
+| `CLAUDE_CODE_MODELS` | lista modeli do wyboru w ustawieniach aplikacji |
+| `COPILOT_MODEL`, `COPILOT_MODEL_FAST` | to samo dla Copilota; listę modeli Copilot podaje sam |
+
+Model zmienisz też w aplikacji: **Ustawienia → Model AI** (bez restartu, z przyciskiem „Testuj”).
+
+**Claude Code:** zainstaluj Claude Code i zaloguj się (uruchom `claude`, przy pierwszym starcie albo poleceniem `/login`).
+**GitHub Copilot:** pobierz runtime (`cd backend && uv run python -m copilot download-runtime`) i zaloguj się w Copilot CLI albo ustaw `COPILOT_GITHUB_TOKEN`.
+Modele działają **bez narzędzi** i w pustym katalogu tymczasowym: AI może tylko rozmawiać, nie ma dostępu do plików ani terminala.
+
+### Budowa
+
+```
+backend/src/english_app/
+  core/        konfiguracja, baza (SQLite + Alembic), rejestr modułów, zdarzenia
+  llm/         interfejs LLMProvider, fabryka providerów, wybór modelu, LLMService
+  modules/     profile, phrases, review, progress, conversation, lessons
+frontend/src/
+  modules/     ekrany modułów (dashboard, frazy, powtórki, rozmowa, lekcje, ustawienia)
+```
+
+- **Nowy provider AI:** klasa dziedzicząca po `LLMProvider` (`backend/src/english_app/llm/base.py`) i jeden wpis w `PROVIDER_FACTORIES` (`llm/factory.py`).
+- **Moduły:** zmienna `ENABLED_MODULES` w `.env` włącza i wyłącza moduły; wyłączony moduł znika z API i z menu.
+- **Aktualizacja fraz:** po zmianie pliku md uruchom `cd backend && uv run python scripts/build_phrases_seed.py`.
+
+---
+
 ## 📖 Table of Contents
 
 - [Features](#-features)

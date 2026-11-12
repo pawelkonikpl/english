@@ -9,6 +9,7 @@ import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,16 @@ async def _handle_request_validation(request: Request, exc: Exception) -> JSONRe
     )
 
 
+async def _handle_http_error(request: Request, exc: Exception) -> JSONResponse:
+    assert isinstance(exc, StarletteHTTPException)
+    if exc.status_code == status.HTTP_404_NOT_FOUND:
+        body = error_body(NotFoundError.code, "Nie znaleziono.")
+    else:
+        body = error_body("http_error", str(exc.detail))
+    return JSONResponse(status_code=exc.status_code, content=body, headers=exc.headers)
+
+
 def register_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppError, _handle_app_error)
     app.add_exception_handler(RequestValidationError, _handle_request_validation)
+    app.add_exception_handler(StarletteHTTPException, _handle_http_error)

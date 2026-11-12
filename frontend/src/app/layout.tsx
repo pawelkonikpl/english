@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Flame, Settings, Sparkles, TriangleAlert, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 
 import { MODULE_NAV, type ModuleNavEntry } from "@/modules/registry";
@@ -163,7 +163,9 @@ export function AppLayout() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
             >
-              <Outlet />
+              <Suspense fallback={<Spinner />}>
+                <Outlet />
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </main>

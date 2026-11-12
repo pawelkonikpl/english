@@ -1,23 +1,33 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router";
 
-import { ChatPage } from "@/modules/conversation/chat-page";
-import { ConversationPage } from "@/modules/conversation/conversation-page";
-import { DashboardPage } from "@/modules/dashboard/dashboard-page";
-import { LessonPage } from "@/modules/lessons/lesson-page";
-import { LessonsPage } from "@/modules/lessons/lessons-page";
-import { PlacementPage } from "@/modules/lessons/placement-page";
-import { OnboardingPage } from "@/modules/onboarding/onboarding-page";
-import { LearnPage } from "@/modules/phrases/learn-page";
-import { PhrasesPage } from "@/modules/phrases/phrases-page";
-import { SectionPage } from "@/modules/phrases/section-page";
-import { ReviewPage } from "@/modules/review/review-page";
-import { SettingsPage } from "@/modules/settings/settings-page";
-import { EmptyState } from "@/shared/ui/states";
+import { EmptyState, Spinner } from "@/shared/ui/states";
 
 import { AppLayout, ModuleGate } from "./layout";
 
+// Pages load on demand so the first screen downloads only what it needs.
+const ChatPage = lazy(() => import("@/modules/conversation/chat-page").then((m) => ({ default: m.ChatPage })));
+const ConversationPage = lazy(() => import("@/modules/conversation/conversation-page").then((m) => ({ default: m.ConversationPage })));
+const DashboardPage = lazy(() => import("@/modules/dashboard/dashboard-page").then((m) => ({ default: m.DashboardPage })));
+const LessonPage = lazy(() => import("@/modules/lessons/lesson-page").then((m) => ({ default: m.LessonPage })));
+const LessonsPage = lazy(() => import("@/modules/lessons/lessons-page").then((m) => ({ default: m.LessonsPage })));
+const PlacementPage = lazy(() => import("@/modules/lessons/placement-page").then((m) => ({ default: m.PlacementPage })));
+const OnboardingPage = lazy(() => import("@/modules/onboarding/onboarding-page").then((m) => ({ default: m.OnboardingPage })));
+const LearnPage = lazy(() => import("@/modules/phrases/learn-page").then((m) => ({ default: m.LearnPage })));
+const PhrasesPage = lazy(() => import("@/modules/phrases/phrases-page").then((m) => ({ default: m.PhrasesPage })));
+const SectionPage = lazy(() => import("@/modules/phrases/section-page").then((m) => ({ default: m.SectionPage })));
+const ReviewPage = lazy(() => import("@/modules/review/review-page").then((m) => ({ default: m.ReviewPage })));
+const SettingsPage = lazy(() => import("@/modules/settings/settings-page").then((m) => ({ default: m.SettingsPage })));
+
 export const router = createBrowserRouter([
-  { path: "/onboarding", element: <OnboardingPage /> },
+  {
+    path: "/onboarding",
+    element: (
+      <Suspense fallback={<Spinner />}>
+        <OnboardingPage />
+      </Suspense>
+    ),
+  },
   {
     element: <AppLayout />,
     children: [

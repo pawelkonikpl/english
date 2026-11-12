@@ -3,12 +3,15 @@
 import logging
 from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from english_app.core import router as core_router
 from english_app.core.clock import SystemClock
-from english_app.core.config import Settings, get_settings
+from english_app.core.config import FRONTEND_DIST, Settings, get_settings
 from english_app.core.db import create_engine, create_session_factory, run_migrations
 from english_app.core.errors import register_error_handlers
 from english_app.core.events import EventBus
@@ -72,4 +75,25 @@ def create_app(
     app.include_router(core_router.router, prefix=API_PREFIX)
     app.include_router(llm_router.router, prefix=API_PREFIX)
     register_error_handlers(app)
+    mount_frontend(app, FRONTEND_DIST)
     return app
+
+
+def mount_frontend(app: FastAPI, dist: Path) -> None:
+    """Serve the built React app (`npm run build`) with a fallback to index.html for SPA routes."""
+    index = dist / "index.html"
+    if not index.is_file():
+        logger.info("Frontend build not found in %s; serving the API only", dist)
+        return
+    root = dist.resolve()
+    if (dist / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    async def spa(path: str) -> FileResponse:
+        if path == "api" or path.startswith("api/"):
+            raise HTTPException(status_code=404)
+        candidate = (root / path).resolve()
+        if path and candidate.is_file() and candidate.is_relative_to(root):
+            return FileResponse(candidate)
+        return FileResponse(index)
