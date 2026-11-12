@@ -11,6 +11,10 @@ Pre-compiled vocabulary lists for each level:
 - B2: 3500 advanced words
 - C1-C2: Academic and sophisticated vocabulary
 
+## Communication Phrases
+
+- [communication-phrases-pl.md](communication-phrases-pl.md) - Prioritized phrases for everyday conversation (repair strategies, small talk, opinions, requests, phrasal verbs, false friends) with Polish translations and a 4-week plan
+
 ## Grammar Guides
 
 Comprehensive grammar explanations:
