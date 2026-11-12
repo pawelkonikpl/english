@@ -112,11 +112,13 @@ def exercises_of(lesson: Lesson) -> list[Exercise]:
 
 
 def matches_any(exercise: Exercise, answer: str) -> bool:
+    # Strict: in lesson exercises one letter is often the point ("work" vs "works").
     for accepted in exercise.accepted:
-        if is_correct(accepted, answer):
+        if is_correct(accepted, answer, allow_typo=False):
             return True
         # The learner may type the whole sentence instead of the missing word.
-        if GAP in exercise.prompt and is_correct(exercise.prompt.replace(GAP, accepted), answer):
+        sentence = exercise.prompt.replace(GAP, accepted)
+        if GAP in exercise.prompt and is_correct(sentence, answer, allow_typo=False):
             return True
     return False
 

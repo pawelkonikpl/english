@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from english_app.core import router as core_router
-from english_app.core.clock import SystemClock
+from english_app.core.clock import Clock, SystemClock
 from english_app.core.config import FRONTEND_DIST, Settings, get_settings
 from english_app.core.db import create_engine, create_session_factory, run_migrations
 from english_app.core.errors import register_error_handlers
@@ -31,6 +31,7 @@ def create_app(
     *,
     available_modules: Sequence[AppModule] | None = None,
     llm_provider: LLMProvider | None = None,
+    clock: Clock | None = None,
 ) -> FastAPI:
     """Build the FastAPI app. Arguments exist so tests can swap configuration and fakes."""
     settings = settings or get_settings()
@@ -64,7 +65,7 @@ def create_app(
     app.state.settings = settings
     app.state.llm_provider = provider
     app.state.modules = modules
-    app.state.clock = SystemClock(settings.app_timezone)
+    app.state.clock = clock or SystemClock(settings.app_timezone)
     app.state.event_bus = EventBus()
 
     context = ModuleContext(settings=settings, clock=app.state.clock)

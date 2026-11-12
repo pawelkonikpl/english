@@ -42,13 +42,22 @@ def edit_distance(a: str, b: str) -> int:
     return dist[-1][-1]
 
 
-def is_correct(expected: str, given: str) -> bool:
+def is_correct(expected: str, given: str, *, allow_typo: bool = True) -> bool:
+    """Compare ignoring case, punctuation and spacing.
+
+    `allow_typo` accepts one typo in longer answers. Turn it off when a single letter is the
+    point of the exercise (e.g. grammar: "work" vs "works").
+    """
     answer = normalize(given)
     if not answer:
         return False
     for option in alternatives(expected):
         if answer == option:
             return True
-        if len(option) >= TYPO_MIN_LENGTH and edit_distance(answer, option) <= MAX_TYPOS:
+        if (
+            allow_typo
+            and len(option) >= TYPO_MIN_LENGTH
+            and edit_distance(answer, option) <= MAX_TYPOS
+        ):
             return True
     return False

@@ -167,7 +167,9 @@ def recommend(data: RecommendationInput) -> Recommendation | None:
             "review",
             None,
             "Powtórki",
-            f"Masz {data.due_reviews} powtórek na dziś. Zacznij od nich!",
+            f"Masz {data.due_reviews} "
+            f"{plural_pl(data.due_reviews, 'powtórkę', 'powtórki', 'powtórek')} na dziś. "
+            "Zacznij od nich!",
         )
     if data.phrases_enrolled_today == 0 and "phrases" in enabled:
         return Recommendation(
