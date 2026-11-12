@@ -1,5 +1,5 @@
 # Local English learning app: FastAPI backend + React frontend.
-.PHONY: install backend frontend dev build run
+.PHONY: install backend frontend dev build run test
 
 install:
 	cd backend && uv sync
@@ -21,3 +21,8 @@ build:
 # One command: build the frontend and serve everything from http://127.0.0.1:8000
 run: build
 	cd backend && uv run python -m english_app
+
+# Backend (pytest) and frontend (vitest) tests; no real AI provider is called.
+test:
+	cd backend && uv run pytest
+	cd frontend && npm test

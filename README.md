@@ -65,6 +65,7 @@ frontend/src/
 - **Nowy provider AI:** klasa dziedzicząca po `LLMProvider` (`backend/src/english_app/llm/base.py`) i jeden wpis w `PROVIDER_FACTORIES` (`llm/factory.py`).
 - **Moduły:** zmienna `ENABLED_MODULES` w `.env` włącza i wyłącza moduły; wyłączony moduł znika z API i z menu.
 - **Aktualizacja fraz:** po zmianie pliku md uruchom `cd backend && uv run python scripts/build_phrases_seed.py`.
+- **Testy:** `make test` (pytest dla backendu, vitest dla frontendu). Testy nie wołają prawdziwego AI: używają providera `fake` i podstawionych SDK.
 
 ---
 

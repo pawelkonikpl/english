@@ -29,17 +29,18 @@ function TierEditor({ tier }: { tier: ModelTier }) {
   const current = settings.data?.tiers.find((t) => t.tier === tier);
   const known = new Set(models.data?.map((m) => m.id));
   const [choice, setChoice] = useState<string | null>(null);
-  const [custom, setCustom] = useState("");
+  // null = untouched: the field starts with the current model, but an emptied field stays empty.
+  const [custom, setCustom] = useState<string | null>(null);
   const [test, setTest] = useState<ModelTestResult | null>(null);
 
   const selected = choice ?? (current?.effective && !known.has(current.effective) && models.data ? CUSTOM : (current?.effective ?? ""));
-  const customValue = custom || (selected === CUSTOM ? (current?.effective ?? "") : "");
+  const customValue = custom ?? (selected === CUSTOM ? (current?.effective ?? "") : "");
   const target = selected === CUSTOM ? customValue.trim() : selected;
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["llm"] });
     setChoice(null);
-    setCustom("");
+    setCustom(null);
   };
   const save = useMutation({
     mutationFn: (model: string | null) =>

@@ -16,13 +16,14 @@ const WEEKDAYS = ["Pn", "", "Śr", "", "Pt", "", "Nd"];
 const LEGEND_LABELS = ["0 XP", "do 25% celu", "do 50% celu", "do 100% celu", "do 150% celu", "ponad 150% celu"];
 
 /** Sequential bins relative to the daily goal, so "full colour" means "goal met". */
-function heatLevel(xp: number, goal: number): number {
+export function heatLevel(xp: number, goal: number): number {
   if (xp <= 0) return 0;
+  // Upper bounds are inclusive, matching the legend ("do 100% celu" includes 100%).
   const ratio = xp / Math.max(goal, 1);
-  if (ratio < 0.25) return 1;
-  if (ratio < 0.5) return 2;
-  if (ratio < 1) return 3;
-  if (ratio < 1.5) return 4;
+  if (ratio <= 0.25) return 1;
+  if (ratio <= 0.5) return 2;
+  if (ratio <= 1) return 3;
+  if (ratio <= 1.5) return 4;
   return 5;
 }
 
