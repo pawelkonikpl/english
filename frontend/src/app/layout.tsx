@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Flame, Settings, Sparkles, TriangleAlert, Zap } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { Suspense, type ReactNode } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 
@@ -152,19 +152,18 @@ export function AppLayout() {
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-28 sm:px-8 lg:pb-12">
           <LlmBanner />
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-            >
-              <Suspense fallback={<Spinner />}>
-                <Outlet />
-              </Suspense>
-            </motion.div>
-          </AnimatePresence>
+          {/* Enter-only transition: an exit animation (AnimatePresence "wait") remounted pages
+              and lost their state when the user prefers reduced motion. */}
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <Suspense fallback={<Spinner />}>
+              <Outlet />
+            </Suspense>
+          </motion.div>
         </main>
       </div>
       <BottomNav entries={entries} />
