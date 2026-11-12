@@ -20,7 +20,7 @@ Lista fraz z `resources/communication-phrases-pl.md` staje się **jednym z modu�
 
 | Temat | Decyzja |
 |---|---|
-| Połączenie z LLM | **Subskrypcje przez CLI/SDK**: Claude Code przez `claude-agent-sdk`, Copilot przez `github-copilot-sdk`. Bez płacenia za tokeny API. *(Odpowiedź użytkownika brzmiała „Cło”, co interpretujemy jako „CLI”. Do potwierdzenia przy review planu.)* |
+| Połączenie z LLM | **Subskrypcje przez CLI/SDK**: Claude Code przez `claude-agent-sdk`, Copilot przez `github-copilot-sdk`. Bez płacenia za tokeny API. *(Potwierdzone przez użytkownika.)* |
 | Frontend | **React + Vite + TypeScript + Tailwind** (osobny SPA, REST do FastAPI) |
 | Użytkownicy | **Jeden użytkownik, lokalnie**, bez logowania |
 | Moduły w MVP | **wszystkie cztery**: Frazy + powtórki, Rozmowa z AI, Lekcje AI, Dashboard i motywacja |
@@ -470,7 +470,7 @@ Każdy etap kończy się działającą aplikacją i osobnym commitem.
 
 ## 8. Ryzyka i otwarte kwestie
 
-1. **Interpretacja „Cło”** jako CLI/SDK (subskrypcje) wymaga potwierdzenia przy review. Jeśli chodziło o coś innego, zmieniamy sekcję 5.3 przed etapem A.
+1. **Wymagania na maszynie:** providery CLI działają tylko tam, gdzie zainstalowane i zalogowane jest Claude Code lub Copilot. Aplikacja musi więc działać na komputerze użytkownika, a nie np. na zdalnym serwerze bez tych logowań.
 2. **Opóźnienia:** każde wywołanie uruchamia proces CLI (Claude) lub sesję (Copilot), więc odpowiedź może trwać kilka sekund. UI musi pokazywać stan oczekiwania. Optymalizacja (utrzymywanie sesji per rozmowa) dopiero w razie potrzeby.
 3. **Warunki subskrypcji:** przed etapem A sprawdzić aktualne zasady korzystania z subskrypcji Claude przez Agent SDK oraz limity „premium requests” w Copilot (koszt i limity są po stronie użytkownika).
 4. **Nazwy modeli:** Claude Agent SDK nie udostępnia listy modeli, więc lista dla Claude Code pochodzi z konfiguracji i może się zestarzeć; dlatego jest pole „własny identyfikator” i przycisk „Testuj”. Nazwy modeli Copilot różnią się od nazw Anthropic (np. format z kropką), więc nie przenosimy ich między providerami. Pole `ResultMessage.model_usage` jako źródło nazwy faktycznie użytego modelu trzeba potwierdzić w etapie A; jeśli go brak, zapisujemy model żądany.
