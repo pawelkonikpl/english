@@ -315,7 +315,7 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 - ocena czterema przyciskami (`Again`, `Hard`, `Good`, `Easy`), skróty klawiszowe (spacja: odwróć; 1–4: ocena),
 - podsumowanie sesji: ile pozycji, ile poprawnych, zdobyte XP.
 
-**conversation (Rozmowa z AI):**
+**conversation (Rozmowa z AI)** (zależy od `profile`, `review` i `phrases`, bo korzysta z ich publicznego API):
 - katalog scenek w `seed/scenarios.json`: kawiarnia, small talk, spotkanie online w pracy, u lekarza, hotel, pytanie o drogę, rozmowa o pracę oraz „Temat dowolny”,
 - start: AI wypowiada pierwszą kwestię zgodnie ze scenką i poziomem z profilu (reguły A1–C2 z `SYSTEM_PROMPT.md`),
 - każda wiadomość użytkownika daje odpowiedź strukturalną: `{reply, corrections: [{original, corrected, explanation_pl}], better_alternatives: [..], used_target_phrases: [..]}`. UI pokazuje odpowiedź rozmówcy, a pod wiadomością użytkownika dyskretne „💡 poprawki”,
@@ -365,6 +365,8 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 | `POST /conversation/{id}/messages` | `{content}` → odpowiedź AI i poprawki |
 | `POST /conversation/{id}/hint` | 3 propozycje odpowiedzi |
 | `POST /conversation/{id}/finish` | podsumowanie i wynik |
+| `GET /conversation` | ostatnie rozmowy (do kontynuacji) |
+| `POST /conversation/{id}/phrases` | `{english, polish}` → fraza z podsumowania trafia do sekcji „Frazy podsunięte przez AI” i do powtórek |
 | `POST /lessons` | `{type, topic?}` → wygenerowana lekcja |
 | `GET /lessons`, `GET /lessons/{id}` | historia i szczegóły |
 | `POST /lessons/{id}/answers` | odpowiedź na ćwiczenie → ocena |

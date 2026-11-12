@@ -1,0 +1,74 @@
+[
+  {
+    "key": "coffee_shop",
+    "title": "W kawiarni",
+    "emoji": "☕",
+    "description": "Zamów kawę i coś do jedzenia, zapytaj o ceny i Wi-Fi.",
+    "ai_role": "a friendly barista in a busy coffee shop in London",
+    "learner_role": "a customer ordering a drink and a snack",
+    "goal": "Order politely, ask at least one question and pay."
+  },
+  {
+    "key": "small_talk",
+    "title": "Small talk",
+    "emoji": "👋",
+    "description": "Luźna rozmowa ze znajomym z pracy przy ekspresie do kawy.",
+    "ai_role": "a cheerful colleague from another team, chatting by the coffee machine",
+    "learner_role": "a colleague having a casual chat",
+    "goal": "Keep a natural small-talk conversation going: weekend, plans, hobbies."
+  },
+  {
+    "key": "online_meeting",
+    "title": "Spotkanie online w pracy",
+    "emoji": "💻",
+    "description": "Krótki status projektu na callu. Zadawaj pytania, dopytuj, ustal kolejne kroki.",
+    "ai_role": "a project manager running a short online status meeting",
+    "learner_role": "a team member giving an update and asking questions",
+    "goal": "Give a short update, ask for clarification once and agree on next steps."
+  },
+  {
+    "key": "doctor",
+    "title": "U lekarza",
+    "emoji": "🩺",
+    "description": "Opisz objawy, odpowiedz na pytania lekarza i dopytaj o leczenie.",
+    "ai_role": "a calm general practitioner during an appointment",
+    "learner_role": "a patient who has not been feeling well",
+    "goal": "Describe symptoms, answer questions and understand the advice."
+  },
+  {
+    "key": "hotel",
+    "title": "W hotelu",
+    "emoji": "🏨",
+    "description": "Zameldowanie, problem z pokojem i pytanie o śniadanie.",
+    "ai_role": "a hotel receptionist at the front desk",
+    "learner_role": "a guest checking in",
+    "goal": "Check in, report one problem with the room and ask about breakfast."
+  },
+  {
+    "key": "directions",
+    "title": "Pytanie o drogę",
+    "emoji": "🗺️",
+    "description": "Zgubiłeś się w nowym mieście. Zapytaj o drogę i upewnij się, że rozumiesz.",
+    "ai_role": "a helpful local on the street",
+    "learner_role": "a tourist who is a bit lost",
+    "goal": "Ask for directions, check that you understood and thank the person."
+  },
+  {
+    "key": "job_interview",
+    "title": "Rozmowa o pracę",
+    "emoji": "🤝",
+    "description": "Opowiedz o sobie, swoim doświadczeniu i zadaj pytania rekruterowi.",
+    "ai_role": "a friendly recruiter interviewing a candidate",
+    "learner_role": "a job candidate",
+    "goal": "Introduce yourself, describe your experience and ask one question about the job."
+  },
+  {
+    "key": "free_topic",
+    "title": "Temat dowolny",
+    "emoji": "✨",
+    "description": "Rozmowa na dowolny temat. Zacznij od tego, o czym chcesz porozmawiać.",
+    "ai_role": "a curious, friendly conversation partner",
+    "learner_role": "themselves",
+    "goal": "Talk about any topic the learner chooses and keep the conversation going."
+  }
+]

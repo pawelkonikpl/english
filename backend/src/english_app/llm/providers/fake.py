@@ -34,7 +34,10 @@ class FakeProvider(LLMProvider):
         self, *, system: str, messages: Sequence[ChatMessage], model: str | None
     ) -> LLMResult[str]:
         last_user = next((m.content for m in reversed(messages) if m.role == "user"), "")
-        reply = f'That\'s interesting! You said: "{last_user}". Tell me more.'
+        if last_user.startswith("("):  # an instruction from the app, not the learner
+            reply = "Hi there! Nice to see you. What can I do for you today?"
+        else:
+            reply = f'That\'s interesting! You said: "{last_user}". Tell me more.'
         return LLMResult(value=reply, model=model or DEFAULT_MODEL)
 
     async def complete_structured(

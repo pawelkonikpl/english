@@ -12,6 +12,22 @@ from english_app.modules.profile.repository import ProfileRepository
 
 LANGUAGE_NAMES = {"pl": "Polish", "en": "English", "de": "German", "uk": "Ukrainian"}
 
+# Level adjustments carried over from docs/SYSTEM_PROMPT.md, phrased for prompts.
+_LEVEL_GUIDANCE = {
+    "beginner": (
+        "Adapt to a beginner: very simple words and short sentences, present and past simple, "
+        "lots of encouragement."
+    ),
+    "intermediate": (
+        "Adapt to an intermediate learner: everyday vocabulary with some phrasal verbs and "
+        "idioms, a natural pace, gently stretch them."
+    ),
+    "advanced": (
+        "Adapt to an advanced learner: rich, natural English with collocations, nuance and "
+        "cultural context; expect near-native accuracy."
+    ),
+}
+
 
 @dataclass(frozen=True)
 class LearnerContext:
@@ -22,6 +38,14 @@ class LearnerContext:
     native_language_name: str
     display_name: str | None
     daily_goal_xp: int
+
+
+def level_guidance(level: CefrLevel) -> str:
+    if level in (CefrLevel.A1, CefrLevel.A2):
+        return _LEVEL_GUIDANCE["beginner"]
+    if level in (CefrLevel.B1, CefrLevel.B2):
+        return _LEVEL_GUIDANCE["intermediate"]
+    return _LEVEL_GUIDANCE["advanced"]
 
 
 async def get_learner_context(session: AsyncSession) -> LearnerContext:
@@ -43,4 +67,4 @@ async def set_level(session: AsyncSession, level: CefrLevel) -> None:
     repository.save(profile)
 
 
-__all__ = ["CefrLevel", "LearnerContext", "get_learner_context", "set_level"]
+__all__ = ["CefrLevel", "LearnerContext", "get_learner_context", "level_guidance", "set_level"]

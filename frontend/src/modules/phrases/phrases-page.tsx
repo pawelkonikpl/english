@@ -15,6 +15,7 @@ const TIER_LABELS: Record<string, string> = {
   "2": "Poziom 2",
   "3": "Poziom 3",
   pitfalls: "Pułapki",
+  ai: "Od AI",
 };
 
 function groupByTier(sections: Section[]): [string, Section[]][] {

@@ -206,3 +206,84 @@ export type Dashboard = z.infer<typeof dashboardSchema>;
 
 export const dayActivitySchema = z.object({ date: z.string(), xp: z.number(), count: z.number() });
 export type DayActivity = z.infer<typeof dayActivitySchema>;
+
+// --- conversation -------------------------------------------------------
+export const scenarioSchema = z.object({
+  key: z.string(),
+  title: z.string(),
+  emoji: z.string(),
+  description: z.string(),
+});
+export type Scenario = z.infer<typeof scenarioSchema>;
+
+export const correctionSchema = z.object({
+  original: z.string(),
+  corrected: z.string(),
+  explanation: z.string(),
+});
+export type Correction = z.infer<typeof correctionSchema>;
+
+export const messageFeedbackSchema = z.object({
+  corrections: z.array(correctionSchema),
+  better_alternatives: z.array(z.string()),
+  used_target_phrases: z.array(z.string()),
+});
+export type MessageFeedback = z.infer<typeof messageFeedbackSchema>;
+
+export const chatMessageSchema = z.object({
+  id: z.number(),
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+  feedback: messageFeedbackSchema.nullable(),
+  model: z.string().nullable(),
+  created_at: z.string(),
+});
+export type ChatMessage = z.infer<typeof chatMessageSchema>;
+
+export const conversationSummarySchema = z.object({
+  score: z.number(),
+  strengths: z.array(z.string()),
+  mistakes: z.array(correctionSchema),
+  new_phrases: z.array(z.object({ english: z.string(), polish: z.string() })),
+});
+export type ConversationSummary = z.infer<typeof conversationSummarySchema>;
+
+export const conversationSchema = z.object({
+  id: z.number(),
+  scenario_key: z.string(),
+  title: z.string(),
+  emoji: z.string(),
+  topic: z.string().nullable(),
+  level: z.string(),
+  status: z.enum(["active", "finished"]),
+  score: z.number().nullable(),
+  summary: conversationSummarySchema.nullable(),
+  target_phrases: z.array(z.object({ id: z.number(), english: z.string(), polish: z.string() })),
+  messages: z.array(chatMessageSchema),
+  started_at: z.string(),
+});
+export type Conversation = z.infer<typeof conversationSchema>;
+
+export const conversationListItemSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  emoji: z.string(),
+  status: z.enum(["active", "finished"]),
+  score: z.number().nullable(),
+  messages: z.number(),
+  started_at: z.string(),
+});
+
+export const sendMessageSchema = z.object({
+  user_message: chatMessageSchema,
+  assistant_message: chatMessageSchema,
+});
+
+export const hintListSchema = z.object({
+  suggestions: z.array(
+    z.object({ level: z.enum(["easy", "medium", "advanced"]), text: z.string(), translation: z.string() }),
+  ),
+});
+export type HintList = z.infer<typeof hintListSchema>;
+
+export const addPhraseSchema = z.object({ phrase_id: z.number(), newly_enrolled: z.boolean() });

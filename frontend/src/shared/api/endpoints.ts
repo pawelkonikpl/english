@@ -2,7 +2,13 @@ import { z } from "zod";
 
 import { json, request } from "./client";
 import {
+  addPhraseSchema,
   appModuleSchema,
+  conversationListItemSchema,
+  conversationSchema,
+  hintListSchema,
+  scenarioSchema,
+  sendMessageSchema,
   dashboardSchema,
   dayActivitySchema,
   dueItemSchema,
@@ -47,6 +53,9 @@ export const queryKeys = {
   explanation: (id: number) => ["phrases", "explanation", id] as const,
   reviewDue: ["review", "due"] as const,
   reviewSummary: ["review", "summary"] as const,
+  scenarios: ["conversation", "scenarios"] as const,
+  conversations: ["conversation", "list"] as const,
+  conversation: (id: number) => ["conversation", "detail", id] as const,
 };
 
 export type ModelSettingsUpdate = Partial<Record<ModelTier, string | null>> & {
@@ -96,4 +105,21 @@ export const api = {
     request(`/review/items/${id}/check-recall`, recallCheckSchema, post({ answer })),
   checkSentence: (id: number, sentence: string) =>
     request(`/review/items/${id}/check-sentence`, sentenceCheckSchema, post({ sentence })),
+
+  scenarios: () => request("/conversation/scenarios", z.array(scenarioSchema)),
+  conversations: () => request("/conversation", z.array(conversationListItemSchema)),
+  conversation: (id: number) => request(`/conversation/${id}`, conversationSchema),
+  startConversation: (scenarioKey: string, targetPhraseIds: number[], topic?: string) =>
+    request(
+      "/conversation",
+      conversationSchema,
+      post({ scenario_key: scenarioKey, target_phrase_ids: targetPhraseIds, topic }),
+    ),
+  sendMessage: (id: number, content: string) =>
+    request(`/conversation/${id}/messages`, sendMessageSchema, post({ content })),
+  hint: (id: number) => request(`/conversation/${id}/hint`, hintListSchema, { method: "POST" }),
+  finishConversation: (id: number) =>
+    request(`/conversation/${id}/finish`, conversationSchema, { method: "POST" }),
+  addConversationPhrase: (id: number, english: string, polish: string) =>
+    request(`/conversation/${id}/phrases`, addPhraseSchema, post({ english, polish })),
 };

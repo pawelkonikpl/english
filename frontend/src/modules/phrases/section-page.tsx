@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Bot, Check, Plus } from "lucide-react";
+import { ArrowLeft, Bot, Check, MessagesSquare, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 
@@ -72,7 +72,17 @@ export function SectionPage() {
       <Link to="/phrases" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-ink-soft hover:text-ink">
         <ArrowLeft className="size-4" aria-hidden /> Wszystkie sekcje
       </Link>
-      <PageHeader title={title ?? code} subtitle={`Sekcja ${code}`} />
+      <PageHeader
+        title={title ?? code}
+        subtitle={`Sekcja ${code}`}
+        actions={
+          <Link to={`/conversation?section=${encodeURIComponent(code)}`}>
+            <Button variant="secondary">
+              <MessagesSquare className="size-4" aria-hidden /> Przećwicz w rozmowie
+            </Button>
+          </Link>
+        }
+      />
       {phrases.isPending && <Spinner />}
       {phrases.isError && <ErrorState error={phrases.error} onRetry={() => void phrases.refetch()} />}
       {phrases.data && (

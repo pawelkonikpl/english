@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router";
 
+import { ChatPage } from "@/modules/conversation/chat-page";
+import { ConversationPage } from "@/modules/conversation/conversation-page";
 import { DashboardPage } from "@/modules/dashboard/dashboard-page";
 import { OnboardingPage } from "@/modules/onboarding/onboarding-page";
 import { LearnPage } from "@/modules/phrases/learn-page";
@@ -53,6 +55,22 @@ export const router = createBrowserRouter([
         element: (
           <ModuleGate moduleKey="review">
             <ReviewPage />
+          </ModuleGate>
+        ),
+      },
+      {
+        path: "conversation",
+        element: (
+          <ModuleGate moduleKey="conversation">
+            <ConversationPage />
+          </ModuleGate>
+        ),
+      },
+      {
+        path: "conversation/:id",
+        element: (
+          <ModuleGate moduleKey="conversation">
+            <ChatPage />
           </ModuleGate>
         ),
       },
