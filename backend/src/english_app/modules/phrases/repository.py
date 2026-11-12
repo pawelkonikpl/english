@@ -28,6 +28,10 @@ class PhraseRepository:
             statement = statement.where(Phrase.section_code == section_code)
         return list((await self._session.exec(statement)).all())
 
+    async def ids_in_tier(self, tier: str) -> list[int]:
+        statement = select(Phrase.id).where(Phrase.tier == tier)
+        return [pid for pid in (await self._session.exec(statement)).all() if pid is not None]
+
     async def find(self, section_code: str, english: str) -> Phrase | None:
         statement = select(Phrase).where(
             Phrase.section_code == section_code, Phrase.english == english

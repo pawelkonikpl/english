@@ -6,15 +6,25 @@ from dataclasses import dataclass
 from fastapi import APIRouter
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from english_app.core.clock import Clock
 from english_app.core.config import Settings
 from english_app.core.errors import ConfigurationError
 from english_app.core.events import EventBus
 
+
+@dataclass(frozen=True)
+class ModuleContext:
+    """Application-wide objects a module may need when it registers event handlers."""
+
+    settings: Settings
+    clock: Clock
+
+
 StartupHook = Callable[[AsyncSession, Settings], Awaitable[None]]
-EventRegistration = Callable[[EventBus], None]
+EventRegistration = Callable[[EventBus, ModuleContext], None]
 
 
-def _no_events(bus: EventBus) -> None:
+def _no_events(bus: EventBus, context: ModuleContext) -> None:
     return None
 
 

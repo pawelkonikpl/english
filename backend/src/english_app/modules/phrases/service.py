@@ -115,6 +115,16 @@ class PhraseService:
                 ),
                 self._session,
             )
+            if await self._tier_fully_enrolled(phrase.tier):
+                await self._bus.publish(
+                    LearningActivity(
+                        kind=ActivityKind.MILESTONE_REACHED,
+                        ref_type=ITEM_TYPE,
+                        ref_id=phrase_id,
+                        details={"milestone": f"phrases_tier_{phrase.tier}"},
+                    ),
+                    self._session,
+                )
         await self._session.commit()
         [with_state] = await self._with_state([phrase])
         return with_state, item.id or 0, created
@@ -148,6 +158,10 @@ class PhraseService:
         self._phrases.add(phrase)
         await self._session.commit()
         return result.value, result.model, False
+
+    async def _tier_fully_enrolled(self, tier: str) -> bool:
+        ids = await self._phrases.ids_in_tier(tier)
+        return len(await review.states(self._session, ITEM_TYPE, ids)) == len(ids)
 
     async def _get(self, phrase_id: int) -> Phrase:
         phrase = await self._phrases.get(phrase_id)

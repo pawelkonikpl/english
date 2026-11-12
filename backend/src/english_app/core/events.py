@@ -21,6 +21,7 @@ class ActivityKind(StrEnum):
     LESSON_ANSWERED = "lesson_answered"
     LESSON_COMPLETED = "lesson_completed"
     CONVERSATION_FINISHED = "conversation_finished"
+    MILESTONE_REACHED = "milestone_reached"
 
 
 @dataclass(frozen=True)

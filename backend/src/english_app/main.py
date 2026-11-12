@@ -12,7 +12,7 @@ from english_app.core.config import Settings, get_settings
 from english_app.core.db import create_engine, create_session_factory, run_migrations
 from english_app.core.errors import register_error_handlers
 from english_app.core.events import EventBus
-from english_app.core.modules import AppModule, resolve_enabled_modules
+from english_app.core.modules import AppModule, ModuleContext, resolve_enabled_modules
 from english_app.llm import router as llm_router
 from english_app.llm.base import LLMProvider
 from english_app.llm.factory import create_llm_provider
@@ -64,8 +64,9 @@ def create_app(
     app.state.clock = SystemClock(settings.app_timezone)
     app.state.event_bus = EventBus()
 
+    context = ModuleContext(settings=settings, clock=app.state.clock)
     for module in modules:
-        module.register_events(app.state.event_bus)
+        module.register_events(app.state.event_bus, context)
         app.include_router(module.router, prefix=f"{API_PREFIX}/{module.key}")
 
     app.include_router(core_router.router, prefix=API_PREFIX)

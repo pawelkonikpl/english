@@ -335,7 +335,7 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 - **XP**: powtórka `good` lub `easy` = 1, `hard` = 0,5 (zaokrąglane w dół przy sumowaniu dnia), poprawna odpowiedź w lekcji = 2, zakończona rozmowa = wynik 0–10, nowa fraza = 1. Dzienny cel XP widoczny jako pierścień postępu,
 - **statystyki**: frazy w nauce i opanowane (ogółem i na poziom), zaległe powtórki dziś, wykres aktywności z 12 tygodni (heatmapa),
 - **rekomendacja „Co dziś?”** (reguły z `SYSTEM_PROMPT.md`): są zaległe powtórki → powtórki; ostatnia lekcja to słówka → gramatyka; ostatnia to gramatyka → słówka; brak aktywności od 2+ dni → powtórki; 3+ lekcje tego samego typu z rzędu → inny typ; brak nowych fraz dziś → frazy,
-- **osiągnięcia** (definicje w kodzie): pierwsza lekcja, 10/50/100/200 fraz, seria 3/7/30 dni, pierwsza rozmowa, ukończony Poziom 1 fraz (wszystkie frazy z sekcji 1.x mają mastery ≥ 1), 100 powtórek. Odblokowanie wywołuje animację w UI.
+- **osiągnięcia** (definicje w kodzie): pierwsza lekcja, 10/50/100/200 fraz, seria 3/7/30 dni, pierwsza rozmowa, ukończony Poziom 1 fraz (wszystkie frazy z sekcji 1.x są w nauce; moduł phrases publikuje wtedy zdarzenie `milestone_reached`), 100 powtórek. Odblokowanie wywołuje animację w UI.
 
 ### 5.8 API (prefiks `/api`)
 
@@ -372,6 +372,7 @@ Deterministyczny, zgodny z dotychczasowym systemem (3/7/14/30 dni):
 | `GET /progress/dashboard` | dane dashboardu (seria, XP dziś i cel, statystyki, rekomendacja) |
 | `GET /progress/activity?days=` | dane heatmapy |
 | `GET /progress/achievements` | lista osiągnięć z datami odblokowania |
+| `POST /progress/achievements/seen` | oznacza nowe osiągnięcia jako obejrzane (dashboard zwraca nieobejrzane, żeby UI pokazał animację) |
 
 Błędy mają jednolity format `{error: {code, message}}`, gdzie `message` jest po polsku i gotowy do pokazania w UI.
 
