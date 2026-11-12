@@ -35,3 +35,11 @@ backup/
 notes.md
 TODO.md
 .claude
+# App
+.env
+data/
+.venv/
+.ruff_cache/
+.mypy_cache/
+node_modules/
+frontend/dist/

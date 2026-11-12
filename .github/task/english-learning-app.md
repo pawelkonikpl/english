@@ -60,9 +60,9 @@ Lista fraz z `resources/communication-phrases-pl.md` staje się **jednym z modu�
 ```
 backend/
   pyproject.toml
-  alembic.ini
-  migrations/
+  alembic.ini                # tylko dla CLI Alembic; aplikacja migruje się sama przy starcie
   src/english_app/
+    migrations/              # Alembic (w pakiecie, żeby ścieżka działała niezależnie od katalogu startu)
     __main__.py              # uruchomienie: python -m english_app (uvicorn)
     main.py                  # create_app(): ładuje włączone moduły, montuje routery, serwuje frontend/dist
     core/
@@ -150,11 +150,12 @@ class LLMResult(Generic[T]):
     model: str | None        # model, który faktycznie odpowiedział (jeśli SDK go zwraca), inaczej żądany
 
 @dataclass(frozen=True)
-class ProviderStatus:
-    provider: str            # "claude_code" | "copilot" | "fake"
-    models: dict[ModelTier, str | None]   # aktywny model dla każdej klasy (None = domyślny providera)
+class ProviderHealth:
     available: bool          # CLI/runtime dostępne i zalogowane
-    detail: str | None       # komunikat dla użytkownika, gdy niedostępne
+    detail: str | None       # komunikat dla użytkownika (PL), gdy niedostępne
+
+# ProviderStatus (provider, models per tier, available, detail) składa LLMService,
+# bo tylko on zna wybór modeli; provider raportuje wyłącznie swoje ProviderHealth.
 
 class LLMProvider(ABC):
     name: ClassVar[str]
@@ -181,8 +182,8 @@ class LLMProvider(ABC):
         """Modele dostępne u providera (do listy wyboru w ustawieniach)."""
 
     @abstractmethod
-    async def status(self) -> ProviderStatus:
-        """Sprawdzenie dostępności (do /api/llm/status i ekranu ustawień)."""
+    async def health(self) -> ProviderHealth:
+        """Tanie sprawdzenie dostępności bez wywołania modelu (do /api/llm/status)."""
 
     async def aclose(self) -> None:
         """Zwolnienie zasobów (np. zamknięcie klienta Copilot) przy wyłączaniu aplikacji."""
